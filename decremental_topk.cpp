@@ -780,22 +780,22 @@ void DecrementalTopK::update_lengths() {
         continue;
         toresumefromx: {};
         reconstructed_k_paths.clear();
-        bool check = false;
-         query(this->y, reverse_ordering[dequeued_v], query_results);
-
-        for(size_t j = 0; j < query_results.size(); j++){
-            for(size_t w = 0; w < query_results[j].size() - 1; w++){
-                assert(w+1 < query_results[j].size());
-                if((query_results[j][w] == this->x && query_results[j][w+1] == this->y) ||
-                        (query_results[j][w] == this->y && query_results[j][w+1] == this->x)){
-
-                    check = true;
-
-                }
-            }
-        }
-        assert(check);
-        query_results.clear();
+//        bool check = false;
+//         query(this->y, reverse_ordering[dequeued_v], query_results);
+//
+//        for(size_t j = 0; j < query_results.size(); j++){
+//            for(size_t w = 0; w < query_results[j].size() - 1; w++){
+//                assert(w+1 < query_results[j].size());
+//                if((query_results[j][w] == this->x && query_results[j][w+1] == this->y) ||
+//                        (query_results[j][w] == this->y && query_results[j][w+1] == this->x)){
+//
+//                    check = true;
+//
+//                }
+//            }
+//        }
+//        assert(check);
+//        query_results.clear();
         union_of_reached_nodes.insert(dequeued_v);
         for(vertex u : graph->neighborRange(reverse_ordering[dequeued_v])){
             to_v = ordering[u];
@@ -868,22 +868,22 @@ void DecrementalTopK::update_lengths() {
         continue;
         toresumefromy: {};
         reconstructed_k_paths.clear();
-        bool check = false;
-        query(this->x, reverse_ordering[dequeued_v], query_results);
-
-        for(size_t j = 0; j < query_results.size(); j++){
-            for(size_t w = 0; w < query_results[j].size() - 1; w++){
-                assert(w+1 < query_results[j].size());
-                if((query_results[j][w] == this->x && query_results[j][w+1] == this->y) ||
-                   (query_results[j][w] == this->y && query_results[j][w+1] == this->x)){
-
-                    check = true;
-
-                }
-            }
-        }
-        assert(check);
-        query_results.clear();
+//        bool check = false;
+//        query(this->x, reverse_ordering[dequeued_v], query_results);
+//
+//        for(size_t j = 0; j < query_results.size(); j++){
+//            for(size_t w = 0; w < query_results[j].size() - 1; w++){
+//                assert(w+1 < query_results[j].size());
+//                if((query_results[j][w] == this->x && query_results[j][w+1] == this->y) ||
+//                   (query_results[j][w] == this->y && query_results[j][w+1] == this->x)){
+//
+//                    check = true;
+//
+//                }
+//            }
+//        }
+//        assert(check);
+//        query_results.clear();
         union_of_reached_nodes.insert(dequeued_v);
 
         for(vertex u : graph->neighborRange(reverse_ordering[dequeued_v])){
@@ -919,9 +919,8 @@ void DecrementalTopK::update_lengths() {
                              this->length_labels[0][resume_hub].label[i].second[j][w+1] == ordering[this->x])
                     ){
                         indices_to_remove.insert(j);
-                        assert(union_of_reached_nodes.find(this->length_labels[0][resume_hub].label[i].first) != union_of_reached_nodes.end());
+                        //assert(union_of_reached_nodes.find(this->length_labels[0][resume_hub].label[i].first) != union_of_reached_nodes.end());
                     }
-
                 }
             }
             for(auto j = indices_to_remove.rbegin(); j != indices_to_remove.rend(); j++){

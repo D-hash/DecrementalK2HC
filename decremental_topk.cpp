@@ -178,7 +178,7 @@ void DecrementalTopK::deallocate_aux() {
 
 
 void DecrementalTopK::build(){
-
+    total_pruning = 0;
     this->tmp_pruned = new bool[graph->numberOfNodes()];
     this->tmp_offset = new dist[graph->numberOfNodes()];
     this->tmp_count = new vertex[graph->numberOfNodes()];
@@ -432,8 +432,10 @@ inline void DecrementalTopK::pruned_bfs(vertex s, bool reversed){
 //
 //         query(reverse_ordering[s], reverse_ordering[v], dists);
 //         tmp_pruned[v] = dists.size() >= K && dists.rbegin()->size() - 1 <= distance;
-         if(tmp_pruned[v])
+         if(tmp_pruned[v]) {
+             total_pruning += 1;
              continue;
+         }
          if(this->tmp_offset[v] == null_distance){
              this->tmp_offset[v] = distance;
              allocate_label(v, s, pvv.second, reversed);
@@ -956,17 +958,18 @@ inline size_t DecrementalTopK::prune(vertex v,  dist d, bool rev){
 
         int l = dcs.size() - 1;
         int c = d;
+        auxiliary_prune.clear();
 
-        std::vector<dist> auxiliary(idv.label[pos].second.rbegin()->size());
+        auxiliary_prune.resize(idv.label[pos].second.rbegin()->size());
         for(size_t i = 0; i < idv.label[pos].second.size(); i++){
-            auxiliary[idv.label[pos].second[i].size()-1] += 1;
+            auxiliary_prune[idv.label[pos].second[i].size()-1] += 1;
         }
         for (int i = 0; i <= c; i++){
-            for(int j = 0; j <= i && j < auxiliary.size(); j++){
-                pcount += (int)dcs[std::min(c - i, l)] * auxiliary[j];
+            for(int j = 0; j <= i && j < auxiliary_prune.size(); j++){
+                pcount += (int)dcs[std::min(c - i, l)] * auxiliary_prune[j];
             }
         }
-        auxiliary.clear();
+        auxiliary_prune.clear();
         if (pcount >= K) return pcount;
     }
     return pcount;

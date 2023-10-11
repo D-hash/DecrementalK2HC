@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
     std::cout << "First Labeling Loop time: " << kpll->loops_time << " s | First Labeling Indexing time: " << kpll->lengths_time<< " s\n";
     std::cout << "First Labeling Loop entries: " << kpll->loop_entries<<" First Labeling Length Entries: "<<kpll->length_entries<< "\n";
     std::cout << "Number of Vertices: " << graph->numberOfNodes() << "\n";
-
+    std::cout << "Total prunings: " << kpll->total_pruning << "\n";
     std::string order_string;
 
     switch(ordering){
@@ -339,7 +339,7 @@ int main(int argc, char **argv) {
 
     std::vector<double> update_loops_times;
     std::vector<double> update_lengths_times;
-    
+
 
     std::vector<size_t> index_loops_size;
     std::vector<size_t> index_lengths_size;
@@ -381,7 +381,7 @@ int main(int argc, char **argv) {
         affected_hubs.push_back(kpll->aff_hubs);
         reached_nodes.push_back(kpll->n_reached_nodes());
         added_edges.push_back(to_remove[t]);
-        
+
     }
     kpll->deallocate_aux();
 
@@ -419,13 +419,13 @@ int main(int argc, char **argv) {
 
     std::cout << "From Scratch Loop time: " << scratch_kpll->loops_time << " s | From Scratch Indexing time: "<< scratch_kpll->lengths_time<< " s\n";
     std::cout << "From Scratch Loop entries: " << scratch_kpll->loop_entries<<" From Scratch Length Entries: "<<scratch_kpll->length_entries<< "\n";
-    
+
     assert(queries.size()==num_queries);
     assert(dists.size()==num_queries);
 
     ProgressStream second_query_bar(num_queries);
 
-    
+
     second_query_bar.label() << "Queries KPLL and Comparison";
     for(uint64_t j=0; j<num_queries; j++){
         u = queries[j].first;
@@ -488,29 +488,29 @@ int main(int argc, char **argv) {
             << added_edges[j].first << "," << added_edges[j].second << ","  << update_loops_times[j] << "," << update_lengths_times[j] << "," << index_loops_size[j] << "," << index_lengths_size[j] << ","
             << 0 << "," << 0 << "," << affected_hubs[j] << "," << reached_nodes[j] << "," << affected_cycles[j] << "," << reached_nodes_mbfs[j] <<"\n";
     }
-    ofs << graph_location << "," 
-        << graph->numberOfNodes() << "," 
-        << graph->numberOfEdges() << "," 
-        << K << "," 
+    ofs << graph_location << ","
+        << graph->numberOfNodes() << ","
+        << graph->numberOfEdges() << ","
+        << K << ","
         << to_remove.size()+1 << ","
         << "none" << "," << "none" << ","  << "final" << "," << "final" << "," << final_loop_entries << "," << final_leng_entries << ","
         << average(khl_time) << ","
-        << median(khl_time) << "," 
-        << final_aff_hubs << "," 
+        << median(khl_time) << ","
+        << final_aff_hubs << ","
         << final_reached << ","
         << final_aff_cycles << ","
         << final_reached_mbfs <<"\n";
 
-    ofs << graph_location << "," 
-        << graph->numberOfNodes() << "," 
-        << graph->numberOfEdges() << "," 
-        << K << "," 
+    ofs << graph_location << ","
+        << graph->numberOfNodes() << ","
+        << graph->numberOfEdges() << ","
+        << K << ","
         << num_insertions << ","
         << "scratch" << "," << "scratch" << ","  << scratch_kpll->loops_time << "," << scratch_kpll->lengths_time << "," << scratch_kpll->loop_entries << "," << scratch_kpll->length_entries << ","
         << average(sl_time) << ","
         << median(sl_time) << ",scratch,scratch,scratch,scratch\n";
     std::cout << "done!\n";
-    ofs.close();    
+    ofs.close();
     delete graph;
     delete scratch_kpll;
 

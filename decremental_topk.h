@@ -67,7 +67,7 @@ public:
     vertex length_entries;
     vertex aff_hubs;
     vertex aff_cycles;
-
+    vertex total_pruning;
     void deallocate_aux();
 
 private:
@@ -123,5 +123,6 @@ private:
     dist* visited_in_update_loops;
     std::set<vertex> union_of_reached_nodes;
     std::vector<std::pair<dist,bool>>* update_temp_dist_flag;
+    std::vector<dist> auxiliary_prune;
 };
 #endif //DECREMENTAL_TOPK_H

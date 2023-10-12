@@ -182,6 +182,7 @@ void DecrementalTopK::build(){
     this->tmp_pruned = new bool[graph->numberOfNodes()];
     this->tmp_offset = new dist[graph->numberOfNodes()];
     this->tmp_count = new vertex[graph->numberOfNodes()];
+    auxiliary_prune.resize(50);
     this->tmp_dist_count = new std::vector<dist>[2];
     for (size_t j = 0; j < 2; j++){
         this->tmp_dist_count[j].resize(graph->numberOfNodes(), 0);
@@ -947,6 +948,9 @@ inline size_t DecrementalTopK::prune(vertex v,  dist d, bool rev){
 
     size_t pcount = 0;
     vertex w = 0;
+    size_t pss;
+    size_t pssi;
+    size_t aux_size = auxiliary_prune.size();
     // cerr << "prune start" << endl;
     for (size_t pos = 0; pos < idv.label.size(); pos++){
         w = idv.label[pos].first;
@@ -958,18 +962,23 @@ inline size_t DecrementalTopK::prune(vertex v,  dist d, bool rev){
 
         int l = dcs.size() - 1;
         int c = d;
-        auxiliary_prune.clear();
-
-        auxiliary_prune.resize(idv.label[pos].second.rbegin()->size());
-        for(size_t i = 0; i < idv.label[pos].second.size(); i++){
-            auxiliary_prune[idv.label[pos].second[i].size()-1] += 1;
+        pss = idv.label[pos].second.size();
+        for(size_t i = 0; i < pss; i++){
+            pssi = idv.label[pos].second[i].size()-1;
+            if(pssi > aux_size) {
+                auxiliary_prune.resize(idv.label[pos].second.rbegin()->size());
+                aux_size = auxiliary_prune.size();
+            }
+            auxiliary_prune[pssi] += 1;
         }
         for (int i = 0; i <= c; i++){
-            for(int j = 0; j <= i && j < auxiliary_prune.size(); j++){
+            for(int j = 0; j <= i && j < aux_size; j++){
                 pcount += (int)dcs[std::min(c - i, l)] * auxiliary_prune[j];
             }
         }
-        auxiliary_prune.clear();
+        for(size_t i = 0; i < aux_size; i++){
+            auxiliary_prune[i] = 0;
+        }
         if (pcount >= K) return pcount;
     }
     return pcount;

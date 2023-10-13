@@ -908,7 +908,7 @@ void DecrementalTopK::update_lengths() {
     this->update_loops();
     // REMOVE OBSOLETE ENTRIES
     std::cout << "Obsolete entries removal started..\n";
-
+    std::set<vertex> to_add;
     std::set<vertex> indices_to_remove;
     for(const vertex& resume_hub: union_of_reached_nodes){
         for(size_t i = 0; i < this->length_labels[0][resume_hub].label.size(); i++){
@@ -922,7 +922,7 @@ void DecrementalTopK::update_lengths() {
                              this->length_labels[0][resume_hub].label[i].second[j][w+1] == ordering[this->x])
                     ){
                         indices_to_remove.insert(j);
-                        //assert(union_of_reached_nodes.find(this->length_labels[0][resume_hub].label[i].first) != union_of_reached_nodes.end());
+                        to_add.insert(this->length_labels[0][resume_hub].label[i].first);
                     }
                 }
             }
@@ -932,6 +932,7 @@ void DecrementalTopK::update_lengths() {
             indices_to_remove.clear();
         }
     }
+    for(auto & v: to_add) union_of_reached_nodes.insert(v);
     std::cout << "Obsolete entries removal ended..\n";
     // RESUME kBFS
     std::cout << "Resumed kBFS started for " << union_of_reached_nodes.size() << " nodes out of " << this->graph->numberOfNodes() << " total vertices..\n";

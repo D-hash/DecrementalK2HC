@@ -262,7 +262,7 @@ int main(int argc, char **argv) {
     }
     edges.clear();
 
-    to_remove = {{216083,216182}};
+    //to_remove = {{216083,216182}};
     DecrementalTopK* kpll = new DecrementalTopK(graph, K, directed,ordering, false);
 
     kpll->build();
@@ -395,8 +395,8 @@ int main(int argc, char **argv) {
     vertex u,v;
     query_bar.label() << "Queries Generation and DynKPLL";
     for(uint64_t j=0; j<num_queries; j++){
-        u = 296658;
-        v = 216083;
+        u = NetworKit::GraphTools::randomNode(*graph);
+        v = NetworKit::GraphTools::randomNode(*graph);
         std::vector<std::vector<vertex>> distances;
         time_counter.restart();
         kpll->query(u, v, distances);

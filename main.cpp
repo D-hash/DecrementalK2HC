@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
 	*graph = NetworKit::GraphTools::toUnweighted(*graph);
 	*graph = NetworKit::GraphTools::toUndirected(*graph);
 
-    std::vector<std::pair<vertex,vertex>> to_remove;
+    std::vector<std::pair<int,std::pair<vertex,vertex>>> edge_updates;
 
     if(num_insertions>=graph->numberOfEdges()){
         num_insertions=graph->numberOfEdges();
@@ -177,18 +177,18 @@ int main(int argc, char **argv) {
     if(experiment == 2){
         long long int ni = 0;
         for(size_t i = edges.size()-1; ni < num_insertions; i--) {
-            if (find(to_remove.begin(), to_remove.end(), make_pair(edges[i].second.first, edges[i].second.second)) !=
-                to_remove.end() ||
-                find(to_remove.begin(), to_remove.end(), make_pair(edges[i].second.second, edges[i].second.first)) !=
-                to_remove.end())
+            if (find(edge_updates.begin(), edge_updates.end(), make_pair(1,make_pair(edges[i].second.first, edges[i].second.second))) !=
+                        edge_updates.end() ||
+                find(edge_updates.begin(), edge_updates.end(), make_pair(-1,make_pair(edges[i].second.second, edges[i].second.first))) !=
+                        edge_updates.end())
                 continue;
             if (edges[i].second.first == edges[i].second.second) continue;
-            to_remove.emplace_back(edges[i].second.first, edges[i].second.second);
+            edge_updates.emplace_back(-1, make_pair(edges[i].second.first, edges[i].second.second));
             graph->removeEdge(edges[i].second.first, edges[i].second.second);
             ni++;
         }
         std::cout << "Edges after removal " << graph->numberOfEdges() << '\n';
-        assert(graph->numberOfEdges()==original_n_edges-to_remove.size());
+        assert(graph->numberOfEdges()==original_n_edges-edge_updates.size());
 
     }
     else {
@@ -234,10 +234,10 @@ int main(int argc, char **argv) {
                     if (attempts > graph->numberOfEdges())
                         throw new std::runtime_error("experiment fails, too many removals, cc cannot be preserved");
                 }
-                to_remove.emplace_back(a, b);
+                edge_updates.emplace_back(-1, make_pair(a, b));
             }
-            for(const auto& edge: to_remove){
-                graph->addEdge(edge.first, edge.second);
+            for(const auto& edge: edge_updates){
+                graph->addEdge(edge.second.first, edge.second.second);
             }
         } else {
             uint16_t attempts = 0;
@@ -246,8 +246,8 @@ int main(int argc, char **argv) {
                 vertex b = NetworKit::GraphTools::randomNode(graph_handle);
                 attempts = 0;
                 while (graph->hasEdge(a, b) || a == b ||
-                       find(to_remove.begin(), to_remove.end(), make_pair(a, b)) != to_remove.end() ||
-                       find(to_remove.begin(), to_remove.end(), make_pair(b, a)) != to_remove.end()) {
+                       find(edge_updates.begin(), edge_updates.end(), make_pair(1,make_pair(a, b))) != edge_updates.end() ||
+                       find(edge_updates.begin(), edge_updates.end(), make_pair(1,make_pair(b, a))) != edge_updates.end()) {
                     attempts += 1;
                     if (attempts > graph->numberOfEdges()) {
                         throw new std::runtime_error("experiment fails, too many insertions");
@@ -255,14 +255,14 @@ int main(int argc, char **argv) {
                     a = NetworKit::GraphTools::randomNode(graph_handle);
                     b = NetworKit::GraphTools::randomNode(graph_handle);
                 }
-                to_remove.emplace_back(a, b);
+                edge_updates.emplace_back(1, make_pair(a, b));
             }
-            assert(to_remove.size() == num_insertions);
+            assert(edge_updates.size() == num_insertions);
         }
     }
     edges.clear();
 
-    //to_remove = {{216083,216182}};
+    //edge_updates = {{1,{0,3}}};
     DecrementalTopK* kpll = new DecrementalTopK(graph, K, directed,ordering, false);
 
     kpll->build();
@@ -354,38 +354,40 @@ int main(int argc, char **argv) {
 
     mytimer time_counter;
 
-    for(size_t t=0;t<to_remove.size();t++){
-
-        kpll->x = to_remove[t].first;
-        kpll->y = to_remove[t].second;
-        std::cout << "Removed edge " << kpll->x << " " << kpll->y << "\n";
-
-        std::cout << "Updating loops...";
-        time_counter.restart();
-        //kpll->update_loops();
-        update_loops_times.push_back(time_counter.elapsed());
-        std::cout<<"done! \nUpdate loops time: " << time_counter.elapsed() << "\n"<<std::flush;
-        affected_cycles.push_back(kpll->aff_cycles);
-        reached_nodes_mbfs.push_back(kpll->n_reached_nodes_mbfs());
-
-        std::cout << "Updating lengths...";
-        time_counter.restart();
-        kpll->update_lengths();
-        update_lengths_times.push_back(time_counter.elapsed());
-        std::cout << "done! \nUpdate lengths time: " << time_counter.elapsed()<<"\n"<<std::flush;
-        std::cout << t+1 << "-th deletion correct!" << "\n";
+    for(size_t t=0;t<edge_updates.size();t++){
+        int update_type = edge_updates[t].first;
+        kpll->x = edge_updates[t].second.first;
+        kpll->y = edge_updates[t].second.second;
+        if(update_type == 1) std::cout << "Inserted ";
+        else std::cout << "Removed ";
+        std::cout << "edge " << kpll->x << " " << kpll->y << "\n";
+        if(update_type == 1) {
+            std::cout << "Updating loops...";
+            time_counter.restart();
+            kpll->update_loops(false);
+            update_loops_times.push_back(time_counter.elapsed());
+            std::cout << "done! \nUpdate loops time: " << time_counter.elapsed() << "\n" << std::flush;
+            affected_cycles.push_back(kpll->aff_cycles);
+            reached_nodes_mbfs.push_back(kpll->n_reached_nodes_mbfs());
+            std::cout << "Updating lengths...";
+            time_counter.restart();
+            kpll->incremental_lengths();
+            update_lengths_times.push_back(time_counter.elapsed());
+            std::cout << "done! \nUpdate lengths time: " << time_counter.elapsed()<<"\n"<<std::flush;
+            std::cout << t+1 << "-th update (insertion) done!" << "\n";
+        }
 
         index_loops_size.push_back(kpll->loop_entries);
         index_lengths_size.push_back(kpll->length_entries);
 
         affected_hubs.push_back(kpll->aff_hubs);
         reached_nodes.push_back(kpll->n_reached_nodes());
-        added_edges.push_back(to_remove[t]);
+        added_edges.push_back(edge_updates[t].second);
 
     }
     kpll->deallocate_aux();
 
-    assert(added_edges.size()==to_remove.size());
+    assert(added_edges.size()==edge_updates.size());
     std::vector<double> sl_time;
     std::vector<double> khl_time;
 
@@ -492,7 +494,7 @@ int main(int argc, char **argv) {
         << graph->numberOfNodes() << ","
         << graph->numberOfEdges() << ","
         << K << ","
-        << to_remove.size()+1 << ","
+        << edge_updates.size()+1 << ","
         << "none" << "," << "none" << ","  << "final" << "," << "final" << "," << final_loop_entries << "," << final_leng_entries << ","
         << average(khl_time) << ","
         << median(khl_time) << ","

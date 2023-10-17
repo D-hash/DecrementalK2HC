@@ -20,7 +20,7 @@
 #include "mytimer.h"
 
 using vertex = uint32_t;
-using dist = uint16_t;
+using dist = uint8_t;
 using edge_id = uint32_t;
 using label_ds = std::vector<std::pair<vertex,std::vector<std::vector<vertex>>>>;
 
@@ -50,9 +50,9 @@ public:
 
     vertex x;
     vertex y;
-    void update_loops();
+    void update_loops(bool);
     void update_lengths();
-
+    void incremental_lengths();
 
 
 
@@ -73,7 +73,7 @@ public:
 private:
     std::vector<std::vector<vertex>> dists;
     std::vector<vertex> updated;
-    std::queue<std::tuple<vertex, vertex, dist, dist, bool, vertex>> new_labels;
+    std::queue<std::pair<std::vector<vertex>, bool>> new_labels;
     std::set<vertex> vertices_to_update;
     bool is_from_scratch_only;
     std::vector<dist> tmp_v;
@@ -86,9 +86,11 @@ private:
     size_t prune(vertex,  dist, bool);
     void compute_loop_entries(vertex);
     void resume_pbfs(vertex, bool);
+    void incremental_resume_pbfs(vertex, vertex, std::vector<vertex> &, bool);
     void allocate_label(vertex, vertex, std::vector<vertex>&, bool);
     void extend_label(vertex, vertex, std::vector<vertex>&, bool, size_t);
     void extend_label_repair(vertex, vertex, std::vector<vertex>&, bool);
+    void incremental_extend_label_repair(vertex, vertex, std::vector<vertex>&, bool);
 
     static const dist null_distance;
     static const vertex null_vertex;

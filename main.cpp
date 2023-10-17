@@ -189,6 +189,25 @@ int main(int argc, char **argv) {
         }
         std::cout << "Edges after removal " << graph->numberOfEdges() << '\n';
         assert(graph->numberOfEdges()==original_n_edges-edge_updates.size());
+        size_t num_removal = num_insertions / 10;
+        std::cout << "Finding " << num_removal << " edges for future removal..\n";
+
+        for (size_t j = 0; j < num_removal; j++) {
+
+            vertex a = NetworKit::GraphTools::randomNode(*graph);
+            vertex b = NetworKit::GraphTools::randomNeighbor(*graph, a);
+            while(find(edge_updates.begin(), edge_updates.end(), make_pair(-1,make_pair(a, b))) !=
+                  edge_updates.end() ||
+                  find(edge_updates.begin(), edge_updates.end(), make_pair(-1,make_pair(b, a))) !=
+                  edge_updates.end()){
+                a = NetworKit::GraphTools::randomNode(*graph);
+                b = NetworKit::GraphTools::randomNeighbor(*graph, a);
+            }
+            edge_updates.insert(edge_updates.begin()+10*j, make_pair(-1, make_pair(a,b)));
+
+        }
+
+
 
     }
     else {
@@ -213,7 +232,7 @@ int main(int argc, char **argv) {
         std::cout << "Number of insertions " << num_insertions << "\n";
 
         if (experiment == 1) {
-            std::cout << "Removal of " << num_insertions << " edges\n";
+            std::cout << "Finding " << num_insertions << " edges for future removal..\n";
 
             uint16_t attempts = 0;
             for (size_t i = 0; i < num_insertions; i++) {
@@ -376,7 +395,17 @@ int main(int argc, char **argv) {
             std::cout << "done! \nUpdate lengths time: " << time_counter.elapsed()<<"\n"<<std::flush;
             std::cout << t+1 << "-th update (insertion) done!" << "\n";
         }
-
+        else{
+            update_loops_times.push_back(0);
+            std::cout << "Updating lengths...";
+            time_counter.restart();
+            kpll->update_lengths();
+            update_lengths_times.push_back(time_counter.elapsed());
+            affected_cycles.push_back(kpll->aff_cycles);
+            reached_nodes_mbfs.push_back(kpll->n_reached_nodes_mbfs());
+            std::cout << "done! \nUpdate lengths time: " << time_counter.elapsed()<<"\n"<<std::flush;
+            std::cout << t+1 << "-th update (deletion) done!" << "\n";
+        }
         index_loops_size.push_back(kpll->loop_entries);
         index_lengths_size.push_back(kpll->length_entries);
 

@@ -179,11 +179,11 @@ int main(int argc, char **argv) {
         for(size_t i = edges.size()-1; ni < num_insertions; i--) {
             if (find(edge_updates.begin(), edge_updates.end(), make_pair(1,make_pair(edges[i].second.first, edges[i].second.second))) !=
                         edge_updates.end() ||
-                find(edge_updates.begin(), edge_updates.end(), make_pair(-1,make_pair(edges[i].second.second, edges[i].second.first))) !=
+                find(edge_updates.begin(), edge_updates.end(), make_pair(1,make_pair(edges[i].second.second, edges[i].second.first))) !=
                         edge_updates.end())
                 continue;
             if (edges[i].second.first == edges[i].second.second) continue;
-            edge_updates.emplace_back(-1, make_pair(edges[i].second.first, edges[i].second.second));
+            edge_updates.emplace_back(1, make_pair(edges[i].second.first, edges[i].second.second));
             graph->removeEdge(edges[i].second.first, edges[i].second.second);
             ni++;
         }
@@ -204,7 +204,6 @@ int main(int argc, char **argv) {
                 b = NetworKit::GraphTools::randomNeighbor(*graph, a);
             }
             edge_updates.insert(edge_updates.begin()+10*j, make_pair(-1, make_pair(a,b)));
-
         }
 
 
@@ -379,7 +378,7 @@ int main(int argc, char **argv) {
         kpll->y = edge_updates[t].second.second;
         if(update_type == 1) std::cout << "Inserted ";
         else std::cout << "Removed ";
-        std::cout << "edge " << kpll->x << " " << kpll->y << "\n";
+        std::cout << "edge " << kpll->x << " " << kpll->y << "\n" << std::flush;
         if(update_type == 1) {
             std::cout << "Updating loops...";
             time_counter.restart();

@@ -9,8 +9,8 @@ OPTIONS = -lnetworkit -lboost_serialization -lboost_program_options -lboost_syst
 INCLUDEPATH = /usr/include/valgrind
 PATHLIB = $(HOME)/networkit/build/ 
 
-TARGETS = main
-OTHERS = decremental_topk.cpp
+TARGETS = smarter_main
+OTHERS = smarter_decremental_topk.cpp
 
 
 

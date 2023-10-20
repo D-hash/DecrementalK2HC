@@ -490,12 +490,17 @@ void DecrementalTopK::query(vertex s, vertex t, std::vector<dist> & container){
             break;
         }
         if (ids.label_offset[pos1].first == idt.label_offset[pos2].first){
+            if(ids.label_offset[pos1].second >= null_distance || idt.label_offset[pos2].second >= null_distance){
+                pos1++;
+                pos2++;
+                continue;
+            }
             W = ids.label_offset[pos1].first;
             for(size_t i = 0; i < ids.p_array[pos1].size(); i++){
                 for(size_t j = 0; j < idt.p_array[pos2].size(); j++){
                     for(size_t m = 0; m < loop_labels[W].size(); m++){
                         d_tmp = ids.label_offset[pos1].second + idt.label_offset[pos2].second + i + j + m;
-                        c_tmp = loop_labels[W][m].size() - (m ? loop_labels[W][m-1].size() : 0);
+                        c_tmp = loop_labels[W][m].size();
                         if (count.size() <= d_tmp) {
                             count.resize(d_tmp + 1, 0);
                         }
@@ -506,11 +511,11 @@ void DecrementalTopK::query(vertex s, vertex t, std::vector<dist> & container){
 
             pos1++;
             pos2++;
-        } 
+        }
         else {
             if (ids.label_offset[pos1].first < idt.label_offset[pos2].first){
                 pos1++;
-            } 
+            }
             else {
                 pos2++;
             }
@@ -669,24 +674,7 @@ void DecrementalTopK::update_loops(bool decremental) {
     for(it=this->vertices_to_update.begin();it!=this->vertices_to_update.end();it++){
     // for(vertex u: to_update){
         u = *it;
-        if(u > std::min(ordering[this->x], ordering[this->y])){
-            continue;
-        }
 
-        ordered_degree = 0;
-        for(vertex neighbor : graph->neighborRange(reverse_ordering[u])){
-
-            if(u < ordering[neighbor]){
-                ordered_degree++;
-            }
-            if(ordered_degree >= K){
-                continue;
-            }
-        }
-
-        if(ordered_degree >= K){
-            continue;
-        }
         for(const auto& dist_arr: this->loop_labels[u])
             for(const auto& arr: dist_arr)
                 total_bits -= 32*arr.size();
@@ -830,6 +818,7 @@ void DecrementalTopK::incremental_lengths() {
 
 void DecrementalTopK::update_lengths() {
     graph->removeEdge(this->x,this->y);
+    deleted.emplace_back(x,y);
     this->aff_hubs = 0;
     this->reached_nodes.clear();
 
@@ -882,6 +871,7 @@ void DecrementalTopK::update_lengths() {
                 continue;
             for(auto & p : this->length_labels[directed][dequeued_v].p_array[i]){
                 jump = false;
+                if(p.empty()) continue;
                 for(auto & t : p){
                     for(size_t e = 0; e < t.size() - 1; e++)
                     if ((t[e] == ordering[this->x] && t[e+1] == ordering[this->y])
@@ -970,6 +960,7 @@ void DecrementalTopK::update_lengths() {
             if(update_temp_dist_flag[this->length_labels[directed][dequeued_v].label_offset[i].first].empty())
                 continue;
             for(auto & p : this->length_labels[directed][dequeued_v].p_array[i]){
+                if(p.empty()) continue;
                 jump = false;
                 for(auto & t : p){
                     for(size_t e = 0; e < t.size() -1; e++) {
@@ -1033,6 +1024,7 @@ void DecrementalTopK::update_lengths() {
 
     // LOOPS UPDATE
     this->update_loops(true);
+
     // REMOVE OBSOLETE ENTRIES
     std::cout << "Obsolete entries removal started..\n";
     std::set<vertex> to_add;
@@ -1040,13 +1032,15 @@ void DecrementalTopK::update_lengths() {
         for(size_t i = 0; i < this->length_labels[0][resume_hub].p_array.size(); i++){
             std::set<vertex> indices_to_remove;
             for(size_t j = 0; j < this->length_labels[0][resume_hub].p_array[i].size(); j++){
-                for(auto & w : this->length_labels[0][resume_hub].p_array[i][j]){
-                    for(size_t e = 0; e < w.size(); e++)
+                for(size_t w = 0; w < this->length_labels[0][resume_hub].p_array[i][j].size(); w++){
+                    for(size_t e = 0; e < this->length_labels[0][resume_hub].p_array[i][j][w].size(); e++)
                     if(
-                            (w[e] == ordering[this->x] && w[e+1] == ordering[this->y]) ||
-                            (w[e] == ordering[this->y] && w[e+1] == ordering[this->x])
+                            (this->length_labels[0][resume_hub].p_array[i][j][w][e] == ordering[this->x]
+                            && this->length_labels[0][resume_hub].p_array[i][j][w][e+1] == ordering[this->y]) ||
+                            (this->length_labels[0][resume_hub].p_array[i][j][w][e] == ordering[this->y]
+                            && this->length_labels[0][resume_hub].p_array[i][j][w][e+1] == ordering[this->x])
                     ){
-                        indices_to_remove.insert(j);
+                        indices_to_remove.insert(w);
                         to_add.insert(this->length_labels[0][resume_hub].label_offset[i].first);
                     }
                 }
@@ -1054,29 +1048,44 @@ void DecrementalTopK::update_lengths() {
                     this->length_labels[0][resume_hub].p_array[i][j].erase(this->length_labels[0][resume_hub].p_array[i][j].begin()+*f);
                 }
                 indices_to_remove.clear();
-                size_t first_not_empty = null_vertex;
-                for(size_t t = 0; t < this->length_labels[0][resume_hub].p_array[i][j].size(); t++){
-                    if(this->length_labels[0][resume_hub].p_array[i][j][t].size() > 0){
-                        first_not_empty = t;
-                        break;
-                    }
-                }
-                if(first_not_empty == null_vertex){ // no more paths, remove label?
-                    this->length_labels[0][resume_hub].label_offset[i].second = null_distance;
-                }
-                else{
-                    for(size_t c = first_not_empty; c < this->length_labels[0][resume_hub].p_array[i][j].size(); c++){
-                        this->length_labels[0][resume_hub].p_array[i][j][c-first_not_empty] = this->length_labels[0][resume_hub].p_array[i][j][c];
-                        this->length_labels[0][resume_hub].p_array[i][j][c].clear();
-                    }
-                    this->length_labels[0][resume_hub].label_offset[i].second = this->length_labels[0][resume_hub].p_array[i][0][0].size()-1;
+            }
+            size_t first_not_empty = null_vertex;
+            for(size_t j = 0; j < this->length_labels[0][resume_hub].p_array[i].size(); j++){
+                if(this->length_labels[0][resume_hub].p_array[i][j].size() > 0){
+                    first_not_empty = j;
+                    break;
                 }
             }
-
+            if(first_not_empty == 0) continue;
+            if(first_not_empty == null_vertex){ // no more paths, remove label?
+                this->length_labels[0][resume_hub].label_offset[i].second = null_distance;
+            }
+            else{
+                for(size_t c = first_not_empty; c < this->length_labels[0][resume_hub].p_array[i].size(); c++){
+                    this->length_labels[0][resume_hub].p_array[i][c-first_not_empty] = this->length_labels[0][resume_hub].p_array[i][c];
+                    this->length_labels[0][resume_hub].p_array[i][c].clear();
+                }
+                this->length_labels[0][resume_hub].label_offset[i].second = this->length_labels[0][resume_hub].p_array[i][0][0].size()-1;
+            }
         }
     }
     for(auto & v: to_add) union_of_reached_nodes.insert(v);
     std::cout << "Obsolete entries removal ended..\n";
+//    for(vertex v = 0; v < graph->numberOfNodes(); v++){
+//        for(const auto & l: this->length_labels[0][v].p_array){
+//            for(const auto & j: l){
+//                for(const auto & i: j){
+//                    for(vertex h = 0; h < i.size() -1; h++){
+//                        if((i[h] == ordering[this->x] && i[h+1] == ordering[this->y]) ||
+//                           (i[h] == ordering[this->y] && i[h+1] == ordering[this->x])){
+//                            throw new std::runtime_error("edge still present");
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+
     // RESUME kBFS
     std::cout << "Resumed kBFS started for " << union_of_reached_nodes.size() << " nodes out of " << this->graph->numberOfNodes() << " total vertices..\n";
     for(const vertex& resume_hub: union_of_reached_nodes){
@@ -1197,6 +1206,12 @@ inline void DecrementalTopK::resume_pbfs(vertex s, bool rev) {
             if(this->length_labels[rev][v].label_offset[t].first > s){
                 break;
             }
+            if(this->length_labels[rev][v].label_offset[t].second >= null_distance
+                ||
+                this->length_labels[rev][v].p_array[t].size() <= pvv.second.size() - 1 - this->length_labels[rev][v].label_offset[t].second){
+                break;
+            }
+
             for(const auto& stored_path: this->length_labels[rev][v].p_array[t][pvv.second.size() - 1 - this->length_labels[rev][v].label_offset[t].second]){
                 if(stored_path == pvv.second){
                     goto no_query;
@@ -1334,7 +1349,6 @@ inline void DecrementalTopK::set_temp_update_vars(vertex s, bool rev){
                             break;
                         }
                     }
-                    std::cout << j << " " << l.size()-1 << "\n";
                     assert(j == l.size()-1);
                     this->update_temp_dist_flag[w].emplace_back(this->tmp_v[i] + j, flags[i] || flag);
                     if(this->update_temp_dist_flag[w].size() > this->K){
@@ -1396,11 +1410,19 @@ inline void DecrementalTopK::extend_label(vertex v, vertex start, std::vector<ve
             }
         }
     }
-    if(path.size() - 1 < idv.p_array[pos].size()){
-        idv.p_array[pos][path.size()-1].push_back(path);
-    } else{
-        idv.p_array[pos].resize(path.size(), {});
-        idv.p_array[pos][path.size()-1].push_back(path);
+    if(idv.label_offset[pos].second >= null_distance){
+        assert(idv.p_array[pos][0].empty());
+        idv.label_offset[pos].second = path.size()-1;
+        idv.p_array[pos][0].push_back(path);
+    }
+    else {
+        dist offset = path.size() - 1 - idv.label_offset[pos].second;
+        if (offset < idv.p_array[pos].size()) {
+            idv.p_array[pos][offset].push_back(path);
+        } else {
+            idv.p_array[pos].resize(offset + 1, {});
+            idv.p_array[pos][offset].push_back(path);
+        }
     }
     total_bits += 32 * path.size();
 }

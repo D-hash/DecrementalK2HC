@@ -98,7 +98,7 @@ private:
     static const dist null_distance;
     static const vertex null_vertex;
     std::queue<std::pair<vertex, std::vector<vertex>>> * node_que;
-
+    std::vector<std::pair<vertex,vertex>> deleted;
     vertex* ordering;
     vertex* reverse_ordering; 
     std::pair<double,vertex>* ordering_rank;

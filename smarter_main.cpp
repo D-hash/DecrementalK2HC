@@ -482,25 +482,12 @@ int main(int argc, char **argv) {
             if(dists[j][l] != distances[l]){
 
                 std::cout << "Error bw " << u << "-" << v << "\n";
-                std::cout << "Updated labeling distance: " << dists[j][l] << "\n";
-                std::cout << "Scratch labeling distance: " << distances[l] << "\n";
-//                for(size_t id=0; id < dists[j].size(); id++){
-//                    std:: cout << "Up " << dists[j][id].size() << " | Scratch " << distances[id].size() << "\n";
-//                }
-//                std::cout << dists[j].size() << " DYNkPLL paths\n";
-//                for(const auto& path: dists[j]){
-//                    for(const auto& vert: path){
-//                        std::cout << vert << "-";
-//                    }
-//                    std::cout << "\n";
-//                }
-//                std::cout << distances.size() << " Scratch-kPLL paths\n";
-//                for(const auto& path: distances){
-//                    for(const auto& vert: path){
-//                        std::cout << vert << "-";
-//                    }
-//                    std::cout << "\n";
-//                }
+                std::cout << "Updated labeling distance: " << (int)dists[j][l] << "\n";
+                std::cout << "Scratch labeling distance: " << (int)distances[l] << "\n";
+                for(size_t id=0; id < dists[j].size(); id++){
+                    std:: cout << "Up " << (int)dists[j][id] << " | Scratch " << (int)distances[id] << "\n";
+                }
+
                 throw new std::runtime_error("correctness problem");
             }
         }

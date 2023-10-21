@@ -1071,21 +1071,31 @@ void DecrementalTopK::update_lengths() {
     }
     for(auto & v: to_add) union_of_reached_nodes.insert(v);
     std::cout << "Obsolete entries removal ended..\n";
-//    for(vertex v = 0; v < graph->numberOfNodes(); v++){
-//        for(const auto & l: this->length_labels[0][v].p_array){
-//            for(const auto & j: l){
-//                for(const auto & i: j){
-//                    for(vertex h = 0; h < i.size() -1; h++){
-//                        if((i[h] == ordering[this->x] && i[h+1] == ordering[this->y]) ||
-//                           (i[h] == ordering[this->y] && i[h+1] == ordering[this->x])){
-//                            throw new std::runtime_error("edge still present");
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
+    for(vertex v = 0; v < graph->numberOfNodes(); v++){
+        for(const auto & l: this->length_labels[0][v].p_array){
+            for(const auto & j: l){
+                for(const auto & i: j){
+                    for(vertex h = 0; h < i.size() -1; h++){
+                        if((i[h] == ordering[this->x] && i[h+1] == ordering[this->y]) ||
+                           (i[h] == ordering[this->y] && i[h+1] == ordering[this->x])){
+                            throw new std::runtime_error("edge still present in length");
+                        }
+                    }
+                }
+            }
+        }
+        for(const auto & vec: this->loop_labels[v]){
+            for(const auto & i: vec){
+                for(vertex h= 0; h < i.size()-1; h++){
+                    if((i[h] == ordering[this->x] && i[h+1] == ordering[this->y]) ||
+                       (i[h] == ordering[this->y] && i[h+1] == ordering[this->x])){
+                        throw new std::runtime_error("edge still present in cycle");
+                    }
+                }
+            }
+        }
 
+    }
     // RESUME kBFS
     std::cout << "Resumed kBFS started for " << union_of_reached_nodes.size() << " nodes out of " << this->graph->numberOfNodes() << " total vertices..\n";
     for(const vertex& resume_hub: union_of_reached_nodes){
@@ -1123,6 +1133,7 @@ inline size_t DecrementalTopK::prune(vertex v,  dist d, bool rev){
         if (pcount >= K) return pcount;
     }
     return pcount;
+
 }
 inline void DecrementalTopK::incremental_resume_pbfs(vertex s, vertex res, std::vector<vertex> & p, bool rev) {
     this->updated.clear();

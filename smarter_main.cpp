@@ -280,7 +280,12 @@ int main(int argc, char **argv) {
     }
     edges.clear();
 
-    //edge_updates = {{1,{0,3}}};
+    //edge_updates = {   {1,{14,37}},{1,{184,101}}, {1,{175,26}} };
+    //, , {1,{14,108}},{1,{153,1}},{1,{51,154}},
+    // ,
+    //         {1,{60,49}}, {1,{115,93}}, {1,{180,15}}, {1,{132,194}}{1,{5,131}},
+    //            ,
+    //            , {1,{77,37}}, {1,{90,52}}  {1,{133,146}}, {1,{71,159}}, {1,{4,183}}, {1,{89,127}},{1,{124,160}}, {1,{49,105}} , {1,{70,32}}
     DecrementalTopK* kpll = new DecrementalTopK(graph, K, directed,ordering, false);
 
     kpll->build();
@@ -421,8 +426,8 @@ int main(int argc, char **argv) {
     vertex u,v;
     query_bar.label() << "Queries Generation and DynKPLL";
     for(uint64_t j=0; j<num_queries; j++){
-        u = NetworKit::GraphTools::randomNode(*graph);
-        v = NetworKit::GraphTools::randomNode(*graph);
+        u = 184;
+        v = 175;
         std::vector<dist> distances;
         time_counter.restart();
         kpll->query(u, v, distances);
@@ -462,20 +467,10 @@ int main(int argc, char **argv) {
         sl_time.push_back(time_counter.elapsed());
 
         if(dists[j].size() != distances.size()){
-//            std::cout << dists[j].size() << " DYNkPLL paths\n";
-//            for(const auto& path: dists[j]){
-//                for(const auto& vert: path){
-//                    std::cout << vert << "-";
-//                }
-//                std::cout << "\n";
-//            }
-//            std::cout << distances.size() << " Scratch-kPLL paths\n";
-//            for(const auto& path: distances){
-//                for(const auto& vert: path){
-//                    std::cout << vert << "-";
-//                }
-//                std::cout << "\n";
-//            }
+            std::cout << dists[j].size() << " DYNkPLL paths\n";
+
+            std::cout << distances.size() << " Scratch-kPLL paths\n";
+
             throw new std::runtime_error("cardinality problem");
         }
         for(size_t l=0; l < dists[j].size(); l++){

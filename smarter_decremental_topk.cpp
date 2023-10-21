@@ -1111,8 +1111,6 @@ inline size_t DecrementalTopK::prune(vertex v,  dist d, bool rev){
 
     size_t pcount = 0;
     vertex w = 0;
-    size_t pss;
-    size_t pssi;
     // cerr << "prune start" << endl;
     for (size_t pos = 0; pos < idv.label_offset.size(); pos++){
         w = idv.label_offset[pos].first;
@@ -1126,9 +1124,7 @@ inline size_t DecrementalTopK::prune(vertex v,  dist d, bool rev){
         int c = d - tmp_s_offset[w] - idv.label_offset[pos].second;
 
         for (int i = 0; i <= c; i++){
-            for(int j = 0; j <= i && j < idv.p_array[pos].size(); j++){
-                pcount += (int)dcs[std::min(c - i, l)] * idv.p_array[pos][j].size();
-            }
+                pcount += (int)dcs[std::min(c - i, l)] * idv.p_array[pos][i].size();
         }
         if (pcount >= K) return pcount;
     }

@@ -1145,9 +1145,6 @@ inline size_t DecrementalTopK::prune(vertex v,  dist d, bool rev){
     for (size_t pos = 0; pos < idv.label_offset.size(); pos++){
         w = idv.label_offset[pos].first;
         if(idv.label_offset[pos].second == null_distance) { // todo empty label due to path removal - should be deleted as well?
-            for(auto & vec: idv.p_array[pos]){
-                assert(vec.empty()); // todo remove
-            }
             continue;
         }
         if (tmp_s_offset[w] == null_distance) continue;
@@ -1307,9 +1304,6 @@ inline void DecrementalTopK::set_temp_vars(vertex s, bool rev){
     for(size_t pos = 0; pos < ids.label_offset.size(); pos++){
         w = ids.label_offset[pos].first;
         if(ids.label_offset[pos].second == null_vertex){
-            for(auto & ver: ids.p_array[pos]){
-                assert(ver.empty()); // todo remove
-            }
             continue;
         }
         this->tmp_s_offset[w] = ids.label_offset[pos].second;
@@ -1362,9 +1356,6 @@ inline void DecrementalTopK::set_temp_update_vars(vertex s, bool rev){
         std::vector<bool> flags;
         w = ids.label_offset[pos].first;
         if(ids.label_offset[pos].second == null_vertex){
-            for(auto & ver: ids.p_array[pos]){
-                assert(ver.empty()); // todo remove
-            }
             continue;
         }
         tmp_v.clear();

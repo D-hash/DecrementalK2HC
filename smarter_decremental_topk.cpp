@@ -670,17 +670,47 @@ void DecrementalTopK::update_loops(bool decremental) {
     vertex ordered_degree = 0;
     vertex u;
     std::set<vertex>::iterator it;
+    if(decremental) {
+        for (it = this->vertices_to_update.begin(); it != this->vertices_to_update.end(); it++) {
+            // for(vertex u: to_update){
+            u = *it;
 
-    for(it=this->vertices_to_update.begin();it!=this->vertices_to_update.end();it++){
-    // for(vertex u: to_update){
-        u = *it;
+            for (const auto &dist_arr: this->loop_labels[u])
+                for (const auto &arr: dist_arr)
+                    total_bits -= 32 * arr.size();
+            this->loop_labels[u].clear();
+            // this->loop_labels[u].shrink_to_fit();
+            this->compute_loop_entries(u);
+        }
+    } else{
+        for(it=this->vertices_to_update.begin();it!=this->vertices_to_update.end();it++){
+            // for(vertex u: to_update){
+            u = *it;
+            if(u > std::min(ordering[this->x], ordering[this->y])){
+                continue;
+            }
 
-        for(const auto& dist_arr: this->loop_labels[u])
-            for(const auto& arr: dist_arr)
-                total_bits -= 32*arr.size();
-        this->loop_labels[u].clear();
-        // this->loop_labels[u].shrink_to_fit();
-        this->compute_loop_entries(u);
+            ordered_degree = 0;
+            for(vertex neighbor : graph->neighborRange(reverse_ordering[u])){
+
+                if(u < ordering[neighbor]){
+                    ordered_degree++;
+                }
+                if(ordered_degree >= K){
+                    continue;
+                }
+            }
+
+            if(ordered_degree >= K){
+                continue;
+            }
+            for (const auto &dist_arr: this->loop_labels[u])
+                for (const auto &arr: dist_arr)
+                    total_bits -= 32 * arr.size();
+            this->loop_labels[u].clear();
+            // this->loop_labels[u].shrink_to_fit();
+            this->compute_loop_entries(u);
+        }
     }
     for(it=reset_visited.begin();it!=reset_visited.end();it++){
         this->visited_in_update_loops[*it] = null_distance;
@@ -811,7 +841,7 @@ void DecrementalTopK::incremental_lengths() {
             this->new_labels.pop();
         }
     }
-    // std::cout<<"done!\n";
+    std::cout<<"done!\n";
 }
 
 
@@ -1114,8 +1144,12 @@ inline size_t DecrementalTopK::prune(vertex v,  dist d, bool rev){
     // cerr << "prune start" << endl;
     for (size_t pos = 0; pos < idv.label_offset.size(); pos++){
         w = idv.label_offset[pos].first;
-        if(idv.label_offset[pos].second == null_distance) // todo empty label due to path removal - should be deleted as well?
+        if(idv.label_offset[pos].second == null_distance) { // todo empty label due to path removal - should be deleted as well?
+            for(auto & vec: idv.p_array[pos]){
+                assert(vec.empty()); // todo remove
+            }
             continue;
+        }
         if (tmp_s_offset[w] == null_distance) continue;
 
         const vector<dist> &dcs = tmp_s_count[w];
@@ -1124,7 +1158,9 @@ inline size_t DecrementalTopK::prune(vertex v,  dist d, bool rev){
         int c = d - tmp_s_offset[w] - idv.label_offset[pos].second;
 
         for (int i = 0; i <= c; i++){
-                pcount += (int)dcs[std::min(c - i, l)] * idv.p_array[pos][i].size();
+            for(int j = 0; j <= i && j < idv.p_array[pos].size(); j++){
+                pcount += (int)dcs[std::min(c - i, l)] * idv.p_array[pos][j].size();
+            }
         }
         if (pcount >= K) return pcount;
     }
@@ -1271,6 +1307,9 @@ inline void DecrementalTopK::set_temp_vars(vertex s, bool rev){
     for(size_t pos = 0; pos < ids.label_offset.size(); pos++){
         w = ids.label_offset[pos].first;
         if(ids.label_offset[pos].second == null_vertex){
+            for(auto & ver: ids.p_array[pos]){
+                assert(ver.empty()); // todo remove
+            }
             continue;
         }
         this->tmp_s_offset[w] = ids.label_offset[pos].second;
@@ -1323,12 +1362,16 @@ inline void DecrementalTopK::set_temp_update_vars(vertex s, bool rev){
         std::vector<bool> flags;
         w = ids.label_offset[pos].first;
         if(ids.label_offset[pos].second == null_vertex){
+            for(auto & ver: ids.p_array[pos]){
+                assert(ver.empty()); // todo remove
+            }
             continue;
         }
         tmp_v.clear();
         for(size_t t = 0; t < ids.p_array[pos].size(); t++) {
             for (const auto &path: ids.p_array[pos][t]) {
                 tmp_v.push_back(path.size() - 1);
+                assert(t == path.size()-1);
                 bool flag;
                 flag = false;
                 for (size_t i = 0; i < path.size() - 1; i++) {

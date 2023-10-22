@@ -426,8 +426,8 @@ int main(int argc, char **argv) {
     vertex u,v;
     query_bar.label() << "Queries Generation and DynKPLL";
     for(uint64_t j=0; j<num_queries; j++){
-        u = 184;
-        v = 175;
+        u = NetworKit::GraphTools::randomNode(*graph);
+        v = NetworKit::GraphTools::randomNode(*graph);
         std::vector<dist> distances;
         time_counter.restart();
         kpll->query(u, v, distances);

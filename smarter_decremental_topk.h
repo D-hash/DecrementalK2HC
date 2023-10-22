@@ -20,7 +20,7 @@
 #include "mytimer.h"
 
 using vertex = uint32_t;
-using dist = uint8_t;
+using dist = uint16_t;
 using edge_id = uint32_t;
 using label_ds = std::vector<std::pair<vertex,dist>>;
 using indexed_paths = std::vector<std::vector<std::vector<vertex>>>;

@@ -1,6 +1,6 @@
 CXX = g++ -std=c++20
 DBG = -g
-OPT = -Ofast -DNDEBUG -march=native
+OPT = -Ofast -DNDEBUG -march=native -fprefetch-loop-arrays
 VALGRIND = -g -DNDEBUG
 
 

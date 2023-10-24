@@ -199,7 +199,11 @@ int main(int argc, char **argv) {
             while(find(edge_updates.begin(), edge_updates.end(), make_pair(-1,make_pair(a, b))) !=
                   edge_updates.end() ||
                   find(edge_updates.begin(), edge_updates.end(), make_pair(-1,make_pair(b, a))) !=
-                  edge_updates.end()){
+                  edge_updates.end() ||
+                    find(edge_updates.begin(), edge_updates.end(), make_pair(1,make_pair(a, b))) !=
+                    edge_updates.end() ||
+                    find(edge_updates.begin(), edge_updates.end(), make_pair(1,make_pair(b, a))) !=
+                    edge_updates.end()){
                 a = NetworKit::GraphTools::randomNode(*graph);
                 b = NetworKit::GraphTools::randomNeighbor(*graph, a);
             }

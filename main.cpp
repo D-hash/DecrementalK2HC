@@ -345,7 +345,7 @@ int main(int argc, char **argv) {
     string_object_name>>k_string;
     string_object_name<<num_insertions;
     string_object_name>>n_insert_string;
-	std::string timestampstring = shortenedName+"_"+k_string+"_"+n_insert_string+"_DECREM_"+order_string+"_"+experiment_string+"_"+tmp_time;
+	std::string timestampstring = "memory_"+shortenedName+"_"+k_string+"_"+n_insert_string+"_DECREM_"+order_string+"_"+experiment_string+"_"+tmp_time;
 
 	std::string logFile = timestampstring +".csv";
     

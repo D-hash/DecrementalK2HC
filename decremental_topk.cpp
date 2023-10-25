@@ -42,8 +42,7 @@ DecrementalTopK::DecrementalTopK(NetworKit::Graph* g, dist k_value, bool dir, di
   
     
     double centr_time = 0.0;
-    this->loop_entries = 0;
-    this->length_entries = 0;
+    this->total_bits = 0;
 
     if(this->ordering_type==0){
 
@@ -290,7 +289,7 @@ inline void DecrementalTopK::compute_loop_entries(vertex s){
         this->node_que->pop();
         if (v == s){
             this->loop_labels[s].push_back({pvv.second});
-            this->loop_entries += pvv.second.size();
+            this->total_bits += 32*pvv.second.size();
             count ++;
             if(count == K) break;
         }
@@ -701,7 +700,7 @@ void DecrementalTopK::update_loops(bool decremental) {
             continue;
         }
         for(const auto& arr: this->loop_labels[u])
-            loop_entries -= arr.size();
+            total_bits -= 32*arr.size();
         this->loop_labels[u].clear();
         // this->loop_labels[u].shrink_to_fit();
         this->compute_loop_entries(u);
@@ -1038,7 +1037,8 @@ void DecrementalTopK::update_lengths() {
                 }
             }
             for(auto j = indices_to_remove.rbegin(); j != indices_to_remove.rend(); j++){
-                this->length_labels[0][resume_hub].label[i].second.erase(this->length_labels[0][resume_hub].label[i].second.begin()+*j);
+                total_bits -= 32*this->length_labels[0][resume_hub].label[i].second[*j].size();
+                        this->length_labels[0][resume_hub].label[i].second.erase(this->length_labels[0][resume_hub].label[i].second.begin()+*j);
             }
             indices_to_remove.clear();
         }
@@ -1335,8 +1335,8 @@ inline void DecrementalTopK::allocate_label(vertex v, vertex start, std::vector<
     index_t &idv = length_labels[dir][v];
     
     idv.label.emplace_back(start,std::vector<std::vector<vertex>>({path}));
-    length_entries++;
-    length_entries+=(path.size());
+    total_bits += 32;
+    total_bits+= 8*path.size();
 
 }
 
@@ -1366,6 +1366,7 @@ inline void DecrementalTopK::extend_label(vertex v, vertex start, std::vector<ve
         }
     }
     idv.label[pos].second.push_back(path);
+    total_bits += 32*path.size();
 }
 
 inline void DecrementalTopK::incremental_extend_label_repair(vertex v, vertex start, std::vector<vertex>& path, bool dir){
@@ -1392,6 +1393,7 @@ inline void DecrementalTopK::incremental_extend_label_repair(vertex v, vertex st
                     pos++;
                 }
                 idv.label[last].second.insert(idv.label[last].second.begin()+pos, path);
+                total_bits += 32*path.size();
                 return;
             }
         }
@@ -1399,6 +1401,7 @@ inline void DecrementalTopK::incremental_extend_label_repair(vertex v, vertex st
     }
     else {
         idv.label.insert(idv.label.begin()+last, std::make_pair(start,std::vector<std::vector<vertex>>({path})));
+        total_bits += 32*path.size();
     }
 
 }
@@ -1426,6 +1429,7 @@ inline void DecrementalTopK::extend_label_repair(vertex v, vertex start, std::ve
     }
     else {
         idv.label.insert(idv.label.begin()+last, std::make_pair(start,std::vector<std::vector<vertex>>({path})));
+        total_bits += 32*path.size();
     }
 
 }

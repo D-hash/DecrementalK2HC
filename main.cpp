@@ -290,7 +290,7 @@ int main(int argc, char **argv) {
     kpll->build();
 
     std::cout << "First Labeling Loop time: " << kpll->loops_time << " s | First Labeling Indexing time: " << kpll->lengths_time<< " s\n";
-    std::cout << "First Labeling Loop entries: " << kpll->loop_entries<<" First Labeling Length Entries: "<<kpll->length_entries<< "\n";
+    std::cout << "First Labeling Total MBs: " << kpll->total_bits / 1000000 << "\n";
     std::cout << "Number of Vertices: " << graph->numberOfNodes() << "\n";
     std::cout << "Total prunings: " << kpll->total_pruning << "\n";
     std::string order_string;
@@ -353,9 +353,9 @@ int main(int argc, char **argv) {
     std::ofstream ofs(logFile);
 
 
-    ofs << "G,V,E,K,Insertions,x,y,UTLoops,UTLengths,ULoopsSize,ULengthSize,UAvgQT,UMedQT,affhubs,reached,affcycles,reachedMbfs\n";
+    ofs << "G,V,E,K,Insertions,x,y,UTLoops,UTLengths,UTotalBits,UAvgQT,UMedQT,affhubs,reached,affcycles,reachedMbfs\n";
     ofs << graph_location << "," << graph->numberOfNodes() << "," << graph->numberOfEdges() << "," << K << "," << 0 << ","
-        << 0 << "," << 0 << ","  << kpll->loops_time << "," << kpll->lengths_time << "," << kpll->loop_entries << "," << kpll->length_entries << ","
+        << 0 << "," << 0 << ","  << kpll->loops_time << "," << kpll->lengths_time << "," << kpll->total_bits << ","
         << 0 << "," << 0 << "," << 0 << "," << 0 << "," << 0 << "," << 0 << "\n";
     
 
@@ -363,8 +363,7 @@ int main(int argc, char **argv) {
     std::vector<double> update_lengths_times;
 
 
-    std::vector<size_t> index_loops_size;
-    std::vector<size_t> index_lengths_size;
+    std::vector<size_t> index_total_bits;
 
 
     std::vector<vertex> affected_hubs;
@@ -409,8 +408,7 @@ int main(int argc, char **argv) {
             std::cout << "done! \nUpdate lengths time: " << time_counter.elapsed()<<"\n"<<std::flush;
             std::cout << t+1 << "-th update (deletion) done!" << "\n";
         }
-        index_loops_size.push_back(kpll->loop_entries);
-        index_lengths_size.push_back(kpll->length_entries);
+        index_total_bits.push_back(kpll->total_bits);
 
         affected_hubs.push_back(kpll->aff_hubs);
         reached_nodes.push_back(kpll->n_reached_nodes());
@@ -439,10 +437,9 @@ int main(int argc, char **argv) {
         dists.emplace_back(distances);
         ++query_bar;
     }
-    vertex final_loop_entries = kpll->loop_entries, final_aff_hubs = kpll->aff_hubs, final_aff_cycles = kpll->aff_cycles;
+    vertex final_total_bits = kpll->total_bits, final_aff_hubs = kpll->aff_hubs, final_aff_cycles = kpll->aff_cycles;
     double final_reached = kpll->n_reached_nodes();
     double final_reached_mbfs = kpll->n_reached_nodes_mbfs();
-    vertex final_leng_entries = kpll->length_entries;
     delete kpll;
 
     DecrementalTopK* scratch_kpll = new DecrementalTopK(graph, K, directed, ordering, true);
@@ -452,7 +449,7 @@ int main(int argc, char **argv) {
     scratch_kpll->deallocate_aux();
 
     std::cout << "From Scratch Loop time: " << scratch_kpll->loops_time << " s | From Scratch Indexing time: "<< scratch_kpll->lengths_time<< " s\n";
-    std::cout << "From Scratch Loop entries: " << scratch_kpll->loop_entries<<" From Scratch Length Entries: "<<scratch_kpll->length_entries<< "\n";
+    std::cout << "From Scratch Total MBs: " << scratch_kpll->total_bits / 1000000 << "\n";
 
     assert(queries.size()==num_queries);
     assert(dists.size()==num_queries);
@@ -519,7 +516,7 @@ int main(int argc, char **argv) {
     std::cout << "Writing CSV file...";
     for(size_t j = 0; j < num_insertions; j++) {
         ofs << graph_location << "," << graph->numberOfNodes() << "," << graph->numberOfEdges() << "," << K << "," << j << ","
-            << added_edges[j].first << "," << added_edges[j].second << ","  << update_loops_times[j] << "," << update_lengths_times[j] << "," << index_loops_size[j] << "," << index_lengths_size[j] << ","
+            << added_edges[j].first << "," << added_edges[j].second << ","  << update_loops_times[j] << "," << update_lengths_times[j] << "," << index_total_bits[j]  << ","
             << 0 << "," << 0 << "," << affected_hubs[j] << "," << reached_nodes[j] << "," << affected_cycles[j] << "," << reached_nodes_mbfs[j] <<"\n";
     }
     ofs << graph_location << ","
@@ -527,7 +524,7 @@ int main(int argc, char **argv) {
         << graph->numberOfEdges() << ","
         << K << ","
         << edge_updates.size()+1 << ","
-        << "none" << "," << "none" << ","  << "final" << "," << "final" << "," << final_loop_entries << "," << final_leng_entries << ","
+        << "none" << "," << "none" << ","  << "final" << "," << "final" << "," << final_total_bits << ","
         << average(khl_time) << ","
         << median(khl_time) << ","
         << final_aff_hubs << ","
@@ -540,7 +537,7 @@ int main(int argc, char **argv) {
         << graph->numberOfEdges() << ","
         << K << ","
         << num_insertions << ","
-        << "scratch" << "," << "scratch" << ","  << scratch_kpll->loops_time << "," << scratch_kpll->lengths_time << "," << scratch_kpll->loop_entries << "," << scratch_kpll->length_entries << ","
+        << "scratch" << "," << "scratch" << ","  << scratch_kpll->loops_time << "," << scratch_kpll->lengths_time << "," << scratch_kpll->total_bits << ","
         << average(sl_time) << ","
         << median(sl_time) << ",scratch,scratch,scratch,scratch\n";
     std::cout << "done!\n";

@@ -63,8 +63,7 @@ public:
 
     double loops_time;
     double lengths_time;
-    vertex loop_entries;
-    vertex length_entries;
+    uint64_t total_bits;
     vertex aff_hubs;
     vertex aff_cycles;
     vertex total_pruning;

@@ -609,20 +609,7 @@ void DecrementalTopK::update_loops(bool decremental) {
             continue;
         }
 
-        ordered_degree = 0;
-        for(vertex neighbor : graph->neighborRange(reverse_ordering[u])){
 
-            if(u < ordering[neighbor]){
-                ordered_degree++;
-            }
-            if(ordered_degree >= K){
-                continue;
-            }
-        }
-
-        if(ordered_degree >= K){
-            continue;
-        }
         for(const auto& arr: this->loop_labels[u])
             total_bits -= 32*arr.size();
         this->loop_labels[u].clear();

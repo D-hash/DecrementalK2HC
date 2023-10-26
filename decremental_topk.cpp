@@ -311,88 +311,11 @@ inline void DecrementalTopK::compute_loop_entries(vertex s){
         }
     }
     delete node_que;
-//    for(size_t i = 1; i < loop_labels[s].size(); i++){
-//        loop_labels[s][i] += loop_labels[s][i-1];
-//    }
-//    assert(loop_labels[s][0] == 1);
     
     this->reached_mbfs.push_back(num_reached);
     
     reset_temp_vars(s, false);
 }
-
-
-//inline void DecrementalTopK::pruned_bfs(vertex s, bool reversed){
-//
-//    set_temp_vars(s, reversed);
-//
-//    vertex curr = 0;
-//    vertex next = 1;
-//    dist   distance = 0;
-//
-//    this->node_que = new std::queue<std::pair<vertex, std::vector<vertex>>>[2];
-//    this->updated.clear();
-//    std::vector<vertex> p = {s};
-//    this->node_que[curr].push(std::make_pair(s, p));
-//    this->tmp_dist_count[curr][s] = 1;
-//    this->updated.push_back(s);
-//    std::pair<vertex, std::vector<vertex>> pvv;
-//    vertex v, to_vert;
-//    dist c;
-//
-//    for (;;){
-//
-//        while (!this->node_que[curr].empty()){
-//
-//            pvv = this->node_que[curr].front();
-//            v = pvv.first;
-//            this->node_que[curr].pop();
-//            c = this->tmp_dist_count[curr][v];
-//            this->tmp_dist_count[curr][v] = 0;
-//
-//            if(c == 0 || tmp_pruned[v]){
-//                continue;
-//            }
-//            this->tmp_pruned[v] = prune(v, distance, reversed);
-//
-//            if(this->tmp_pruned[v]){
-//                continue;
-//            }
-//
-//            if(this->tmp_offset[v] == null_distance){
-//                this->tmp_offset[v] = distance;
-//                allocate_label(v, s, pvv.second, reversed);
-//            }
-//            else{
-//                extend_label(v, s, pvv.second, reversed, 0);
-//            }
-//
-//            for(vertex u : graph->neighborRange(reverse_ordering[v])){
-//                to_vert = ordering[u];
-//                if(this->tmp_count[to_vert] == 0){
-//                    this->updated.push_back(to_vert);
-//                }
-//
-//                if(to_vert > s && this->tmp_count[to_vert] < K){
-//                    this->tmp_count[to_vert] += c;
-//                    std::vector<vertex> temp(pvv.second.begin(), pvv.second.end());
-//                    temp.push_back(to_vert);
-//                    this->node_que[next].push(std::make_pair(to_vert, temp));
-//                    this->tmp_dist_count[next][to_vert] += c;
-//                }
-//            }
-//        }
-//
-//        if (this->node_que[next].empty()){
-//            break;
-//            }
-//        std::swap(curr, next);
-//        distance++;
-//    }
-//    delete[] node_que;
-//
-//    reset_temp_vars(s, reversed);
-//};
 
 
 inline void DecrementalTopK::pruned_bfs(vertex s, bool reversed){
@@ -405,6 +328,7 @@ inline void DecrementalTopK::pruned_bfs(vertex s, bool reversed){
     std::pair<vertex, std::vector<vertex>> pvv;
     pvv.first = s;
     pvv.second = p;
+    std::vector<vertex> temp;
     for(vertex u : graph->neighborRange(reverse_ordering[s])){
         to_vert = ordering[u];
         if(to_vert > s && this->tmp_count[to_vert] < K){
@@ -452,12 +376,13 @@ inline void DecrementalTopK::pruned_bfs(vertex s, bool reversed){
              }
 
              if(to_vert > s && this->tmp_count[to_vert] < K){
-                 std::vector<vertex> temp(pvv.second.begin(), pvv.second.end());
+                 temp = pvv.second;
                  temp.push_back(to_vert);
                  this->node_que->push(std::make_pair(to_vert, temp));
              }
          }
      }
+     temp.clear();
     delete node_que;
 
     reset_temp_vars(s, reversed);
@@ -569,7 +494,6 @@ inline void DecrementalTopK::verify_sizes(){
 }
 
 void DecrementalTopK::update_loops(bool decremental) {
-    // todo check insertion and deletion of edges depending on update type
     if(decremental) {
         graph->addEdge(this->x, this->y);
     }
@@ -750,11 +674,12 @@ void DecrementalTopK::incremental_lengths() {
         w_a = pos_a < this->old_label_a.size() ? this->old_label_a[pos_a].first : graph->numberOfNodes();
         w_b = pos_b < this->old_label_b.size() ? this->old_label_b[pos_b].first : graph->numberOfNodes();
 
+        std::vector<vertex> temp;
         if(w_a < w_b){
             if(w_a < ordering[this->y]){
                 aff_hubs++;
                 for(size_t i = 0; i < this->old_label_a[pos_a].second.size(); i++){
-                    std::vector<vertex> temp(this->old_label_a[pos_a].second[i].begin(), this->old_label_a[pos_a].second[i].end());
+                    temp = this->old_label_a[pos_a].second[i];
                     temp.push_back(ordering[this->y]);
                     incremental_resume_pbfs(w_a,ordering[this->y], temp, false);
                 }
@@ -768,7 +693,7 @@ void DecrementalTopK::incremental_lengths() {
             if(w_b < ordering[this->x]){
                 aff_hubs++;
                 for(size_t i = 0; i < this->old_label_b[pos_b].second.size(); i++){
-                    std::vector<vertex> temp(this->old_label_b[pos_b].second[i].begin(),this->old_label_b[pos_b].second[i].end());
+                    temp = this->old_label_b[pos_b].second[i];
                     temp.push_back(ordering[this->x]);
                     incremental_resume_pbfs(w_b,ordering[this->x], temp, false);
                 }
@@ -783,7 +708,7 @@ void DecrementalTopK::incremental_lengths() {
 
             if(w_a < ordering[this->y]){
                 for(size_t i = 0; i < this->old_label_a[pos_a].second.size(); i++){
-                    std::vector<vertex> temp(this->old_label_a[pos_a].second[i].begin(), this->old_label_a[pos_a].second[i].end());
+                    temp = this->old_label_a[pos_a].second[i];
                     temp.push_back(ordering[this->y]);
                     incremental_resume_pbfs(w_a,ordering[this->y], temp, false);
                 }
@@ -792,7 +717,7 @@ void DecrementalTopK::incremental_lengths() {
             }
             if(w_b < ordering[this->x]){
                 for(size_t i = 0; i < this->old_label_b[pos_b].second.size(); i++){
-                    std::vector<vertex> temp(this->old_label_b[pos_b].second[i].begin(),this->old_label_b[pos_b].second[i].end());
+                    temp = this->old_label_b[pos_b].second[i];
                     temp.push_back(ordering[this->x]);
                     incremental_resume_pbfs(w_b,ordering[this->x], temp, false);
                 }
@@ -802,13 +727,15 @@ void DecrementalTopK::incremental_lengths() {
             pos_a++;
             pos_b++;
         }
-
+        temp.clear();
         while(!this->new_labels.empty()){
             incremental_extend_label_repair(*this->new_labels.front().first.rbegin(),this->new_labels.front().first[0],
                                 this->new_labels.front().first, this->new_labels.front().second);
             this->new_labels.pop();
         }
     }
+    this->old_label_a.clear();
+    this->old_label_b.clear();
     // std::cout<<"done!\n";
 }
 
@@ -822,19 +749,6 @@ void DecrementalTopK::update_lengths() {
     const index_t &idva = length_labels[0][ordering[this->x]];
     const index_t &idvb = length_labels[0][ordering[this->y]];
 
-    
-//    this->old_label_a.clear();
-//    this->old_label_b.clear();
-//
-//    vertex w_a, w_b;
-//
-//    for(auto& elem: idva.label){
-//        this->old_label_a.push_back(elem);
-//    }
-//
-//    for(auto& elem: idvb.label){
-//        this->old_label_b.push_back(elem);
-//    }
     // DISCOVER AFFECTED NODES
     set_temp_update_vars(ordering[this->y],directed);
     this->visited_in_update_lengths_from_a.clear();
@@ -852,6 +766,8 @@ void DecrementalTopK::update_lengths() {
     this->union_of_reached_nodes.clear();
     std::vector<std::vector<vertex>> query_results;
     std::cout << "Affected nodes from x started..\n";
+    std::vector<std::pair<dist,bool>> reconstructed_k_paths;
+
     while(!q->empty()){
         dequeued_v = q->front();
         bool jump = true;
@@ -861,8 +777,7 @@ void DecrementalTopK::update_lengths() {
         this->tmp_pruned[dequeued_v] = true;
         this->visited_in_update_lengths_from_a.push_back(dequeued_v);
         //std::cout << "Number of visited vertices " << this->visited_in_update_lengths_from_a.size() << "\n";
-
-        std::vector<std::pair<dist,bool>> reconstructed_k_paths;
+        reconstructed_k_paths.clear();
         for(auto & i : this->length_labels[directed][dequeued_v].label){
             if(update_temp_dist_flag[i.first].empty())
                 continue;
@@ -893,22 +808,7 @@ void DecrementalTopK::update_lengths() {
         continue;
         toresumefromx: {};
         reconstructed_k_paths.clear();
-//        bool check = false;
-//         query(this->y, reverse_ordering[dequeued_v], query_results);
-//
-//        for(size_t j = 0; j < query_results.size(); j++){
-//            for(size_t w = 0; w < query_results[j].size() - 1; w++){
-//                assert(w+1 < query_results[j].size());
-//                if((query_results[j][w] == this->x && query_results[j][w+1] == this->y) ||
-//                        (query_results[j][w] == this->y && query_results[j][w+1] == this->x)){
-//
-//                    check = true;
-//
-//                }
-//            }
-//        }
-//        assert(check);
-//        query_results.clear();
+
         union_of_reached_nodes.insert(dequeued_v);
         for(vertex u : graph->neighborRange(reverse_ordering[dequeued_v])){
             to_v = ordering[u];
@@ -937,20 +837,8 @@ void DecrementalTopK::update_lengths() {
         if(this->tmp_pruned[dequeued_v]) continue;
         this->tmp_pruned[dequeued_v] = true;
         this->visited_in_update_lengths_from_b.push_back(dequeued_v);
-        // std::cout << "Number of visited vertices " << this->visited_in_update_lengths_from_b.size() << "\n";
-//        query(this->x, reverse_ordering[dequeued_v], query_results);
-//        for(size_t j = 0; j < query_results.size(); j++){
-//            for(size_t w = 0; w < query_results[j].size()-1; w++){ // todo controllare se ce ne sono di stessa lunghezza con flag false
-//                assert(w+1 < query_results[j].size());
-//                if((query_results[j][w] == this->x && query_results[j][w+1] == this->y) ||
-//                   (query_results[j][w] == this->y && query_results[j][w+1] == this->x)){
-//                    union_of_reached_nodes.insert(dequeued_v);
-//                    jump = false;
-//                }
-//            }
-//        }
-//        query_results.clear();
-        std::vector<std::pair<dist,bool>> reconstructed_k_paths;
+
+        reconstructed_k_paths.clear();
         for(auto & i : this->length_labels[directed][dequeued_v].label){
             if(update_temp_dist_flag[i.first].empty())
                 continue;
@@ -981,22 +869,7 @@ void DecrementalTopK::update_lengths() {
         continue;
         toresumefromy: {};
         reconstructed_k_paths.clear();
-//        bool check = false;
-//        query(this->x, reverse_ordering[dequeued_v], query_results);
-//
-//        for(size_t j = 0; j < query_results.size(); j++){
-//            for(size_t w = 0; w < query_results[j].size() - 1; w++){
-//                assert(w+1 < query_results[j].size());
-//                if((query_results[j][w] == this->x && query_results[j][w+1] == this->y) ||
-//                   (query_results[j][w] == this->y && query_results[j][w+1] == this->x)){
-//
-//                    check = true;
-//
-//                }
-//            }
-//        }
-//        assert(check);
-//        query_results.clear();
+
         union_of_reached_nodes.insert(dequeued_v);
 
         for(vertex u : graph->neighborRange(reverse_ordering[dequeued_v])){
@@ -1104,7 +977,7 @@ inline void DecrementalTopK::incremental_resume_pbfs(vertex s, vertex res, std::
     vertex v, to_vert;
     std::pair<vertex, std::vector<vertex>> pvv;
     set_temp_vars(s, rev);
-
+    std::vector<vertex> temp;
     dist distance;
     while (!this->node_que->empty()) {
         pvv = this->node_que->front();
@@ -1133,12 +1006,13 @@ inline void DecrementalTopK::incremental_resume_pbfs(vertex s, vertex res, std::
             to_vert = ordering[u];
 
             if(to_vert > s && this->tmp_count[to_vert] < K){
-                std::vector<vertex> temp(pvv.second.begin(), pvv.second.end());
+                temp = pvv.second;
                 temp.push_back(to_vert);
                 this->node_que->push(std::make_pair(to_vert, temp));
             }
         }
     }
+    temp.clear();
     delete node_que;
 
     reset_temp_vars(s, rev);
@@ -1156,6 +1030,7 @@ inline void DecrementalTopK::resume_pbfs(vertex s, bool rev) {
     vertex currently_reached_nodes = 0;
     this->dists.clear();
     this->updated.push_back(s);
+    std::vector<vertex> temp;
     while (!this->node_que->empty()) {
         pvv = this->node_que->front();
         v = pvv.first;
@@ -1207,13 +1082,13 @@ inline void DecrementalTopK::resume_pbfs(vertex s, bool rev) {
             }
 
             if(to_vert > s && this->tmp_count[to_vert] < K){
-                std::vector<vertex> temp(pvv.second.begin(), pvv.second.end());
+                temp = pvv.second;
                 temp.push_back(to_vert);
                 this->node_que->push(std::make_pair(to_vert, temp));
             }
         }
     }
-
+    temp.clear();
     this->reached_nodes.push_back(currently_reached_nodes);
     delete node_que;
 
@@ -1433,35 +1308,3 @@ inline void DecrementalTopK::extend_label_repair(vertex v, vertex start, std::ve
     }
 
 }
-
-// void DecrementalTopK::mod_bfs(vertex s, vertex t, std::vector<dist> &ret) {
-//     s = ordering[s];
-//     t = ordering[t];
-//     std:vector<std::vector<dist> > distanze(graph->numberOfNodes());
-//     std::priority_queue<pair<dist, vertex > > que;
-
-//     que.push(make_pair(0, s));
-//     vertex v;
-//     vertex dist_negative;
-//     while (!que.empty()) {
-//         v = que.top().second;
-//         dist_negative = -que.top().first;
-//         que.pop();
-
-//         if(distanze[t].size() >= this->K){
-//             break;
-//         }
-//         if (distanze[v].size() >= this->K){
-//             continue;
-//         }
-
-//         distanze[v].push_back(dist_negative);
-//         for(vertex u : graph->neighborRange(reverse_ordering[v])){
-
-//         // graph->forNeighborsOf(reverse_ordering[v], [&](NetworKit::node u) {
-            
-//             que.push(make_pair(-(1 + dist_negative), ordering[u]));
-//         }
-//     }
-//     ret = distanze[t];
-// }

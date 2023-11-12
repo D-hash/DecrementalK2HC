@@ -209,9 +209,6 @@ int main(int argc, char **argv) {
             }
             edge_updates.insert(edge_updates.begin()+10*j, make_pair(-1, make_pair(a,b)));
         }
-
-
-
     }
     else {
         const NetworKit::Graph &graph_handle = *graph;
@@ -278,8 +275,29 @@ int main(int argc, char **argv) {
                     b = NetworKit::GraphTools::randomNode(graph_handle);
                 }
                 edge_updates.emplace_back(1, make_pair(a, b));
+
             }
             assert(edge_updates.size() == num_insertions);
+            size_t num_removal = num_insertions / 10;
+            std::cout << "Finding " << num_removal << " edges for future removal..\n";
+
+            for (size_t j = 0; j < num_removal; j++) {
+
+                vertex a = NetworKit::GraphTools::randomNode(*graph);
+                vertex b = NetworKit::GraphTools::randomNeighbor(*graph, a);
+                while(find(edge_updates.begin(), edge_updates.end(), make_pair(-1,make_pair(a, b))) !=
+                      edge_updates.end() ||
+                      find(edge_updates.begin(), edge_updates.end(), make_pair(-1,make_pair(b, a))) !=
+                      edge_updates.end() ||
+                      find(edge_updates.begin(), edge_updates.end(), make_pair(1,make_pair(a, b))) !=
+                      edge_updates.end() ||
+                      find(edge_updates.begin(), edge_updates.end(), make_pair(1,make_pair(b, a))) !=
+                      edge_updates.end()){
+                    a = NetworKit::GraphTools::randomNode(*graph);
+                    b = NetworKit::GraphTools::randomNeighbor(*graph, a);
+                }
+                edge_updates.insert(edge_updates.begin()+10*j, make_pair(-1, make_pair(a,b)));
+            }
         }
     }
     edges.clear();

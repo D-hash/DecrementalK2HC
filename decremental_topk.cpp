@@ -609,7 +609,6 @@ void DecrementalTopK::update_loops(bool decremental) {
             continue;
         }
 
-
         for(const auto& arr: this->loop_labels[u])
             total_bits -= 32*arr.size();
         this->loop_labels[u].clear();
@@ -778,7 +777,7 @@ void DecrementalTopK::update_lengths() {
                     }
                 }
                 for(const auto & prefix: update_temp_dist_flag[i.first])
-                reconstructed_k_paths.emplace_back(i.second[p].size() - 1 + prefix.first, jump || prefix.second);
+                    reconstructed_k_paths.emplace_back(i.second[p].size() - 1 + prefix.first, jump || prefix.second);
                 if(reconstructed_k_paths.size() > K){
                     std::sort(reconstructed_k_paths.begin(), reconstructed_k_paths.end());
                 }

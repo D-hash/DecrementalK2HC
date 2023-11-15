@@ -467,6 +467,26 @@ void DecrementalTopK::query(vertex s, vertex t, std::vector<std::vector<vertex>>
     //return container.size() < this->K ? INT_MAX : 0;
 }
 
+uint64_t DecrementalTopK::compute_index_size() {
+    uint64_t sz = 0;
+    for(vertex i=0;i<graph->numberOfNodes();i++){
+        for(const std::vector<vertex>& cycles: loop_labels[i] )
+            sz += cycles.size() * 32; // loopcount
+    }
+    //assert(sz==loop_entries);
+    for (size_t dir = 0; dir < 1 + directed; dir++){
+        for(vertex i=0;i<graph->numberOfNodes();i++){
+            for(const auto & le: length_labels[dir][i].label){
+                sz += 32; // hub count
+                for(const auto & paths: le.second){
+                    sz += 32*paths.size();
+                }
+            }
+        }
+    }
+    return sz;
+}
+
 inline void DecrementalTopK::verify_sizes(){
     
     vertex sz = 0;

@@ -68,6 +68,7 @@ public:
     vertex aff_cycles;
     vertex total_pruning;
     void deallocate_aux();
+    uint64_t compute_index_size();
 
 private:
     std::vector<std::vector<vertex>> dists;

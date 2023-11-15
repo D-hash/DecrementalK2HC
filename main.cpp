@@ -308,7 +308,7 @@ int main(int argc, char **argv) {
     kpll->build();
 
     std::cout << "First Labeling Loop time: " << kpll->loops_time << " s | First Labeling Indexing time: " << kpll->lengths_time<< " s\n";
-    std::cout << "First Labeling Total MBs: " << kpll->total_bits / 1000000 << "\n";
+    std::cout << "First Labeling Total MBs: " << kpll->compute_index_size() / 1000000 << "\n";
     std::cout << "Number of Vertices: " << graph->numberOfNodes() << "\n";
     std::cout << "Total prunings: " << kpll->total_pruning << "\n";
     std::string order_string;
@@ -455,7 +455,7 @@ int main(int argc, char **argv) {
         dists.emplace_back(distances);
         ++query_bar;
     }
-    vertex final_total_bits = kpll->total_bits, final_aff_hubs = kpll->aff_hubs, final_aff_cycles = kpll->aff_cycles;
+    uint64_t final_total_bits = kpll->compute_index_size(), final_aff_hubs = kpll->aff_hubs, final_aff_cycles = kpll->aff_cycles;
     double final_reached = kpll->n_reached_nodes();
     double final_reached_mbfs = kpll->n_reached_nodes_mbfs();
     delete kpll;
@@ -465,9 +465,9 @@ int main(int argc, char **argv) {
     scratch_kpll->build();
     //OK, no updates
     scratch_kpll->deallocate_aux();
-
+    uint64_t scratch_total_bits = scratch_kpll->compute_index_size();
     std::cout << "From Scratch Loop time: " << scratch_kpll->loops_time << " s | From Scratch Indexing time: "<< scratch_kpll->lengths_time<< " s\n";
-    std::cout << "From Scratch Total MBs: " << scratch_kpll->total_bits / 1000000 << "\n";
+    std::cout << "From Scratch Total MBs: " << scratch_total_bits / 1000000 << "\n";
 
     assert(queries.size()==num_queries);
     assert(dists.size()==num_queries);
@@ -555,7 +555,7 @@ int main(int argc, char **argv) {
         << graph->numberOfEdges() << ","
         << K << ","
         << num_insertions << ","
-        << "scratch" << "," << "scratch" << ","  << scratch_kpll->loops_time << "," << scratch_kpll->lengths_time << "," << scratch_kpll->total_bits << ","
+        << "scratch" << "," << "scratch" << ","  << scratch_kpll->loops_time << "," << scratch_kpll->lengths_time << "," << scratch_total_bits << ","
         << average(sl_time) << ","
         << median(sl_time) << ",scratch,scratch,scratch,scratch\n";
     std::cout << "done!\n";

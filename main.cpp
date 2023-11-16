@@ -262,20 +262,21 @@ int main(int argc, char **argv) {
             uint16_t attempts = 0;
             for (int i = 0; i < num_insertions; i++) {
                 vertex a = NetworKit::GraphTools::randomNode(graph_handle);
-                vertex b = NetworKit::GraphTools::randomNode(graph_handle);
+                vertex b = NetworKit::GraphTools::randomNeighbor(*graph, a);
+                graph->removeEdge(a, b);
                 attempts = 0;
-                while (graph->hasEdge(a, b) || a == b ||
-                       find(edge_updates.begin(), edge_updates.end(), make_pair(1,make_pair(a, b))) != edge_updates.end() ||
-                       find(edge_updates.begin(), edge_updates.end(), make_pair(1,make_pair(b, a))) != edge_updates.end()) {
+                cc->run();
+                while (cc->numberOfComponents() > 1) {
                     attempts += 1;
-                    if (attempts > graph->numberOfEdges()) {
-                        throw new std::runtime_error("experiment fails, too many insertions");
-                    }
-                    a = NetworKit::GraphTools::randomNode(graph_handle);
-                    b = NetworKit::GraphTools::randomNode(graph_handle);
+                    graph->addEdge(a, b);
+                    a = NetworKit::GraphTools::randomNode(*graph);
+                    b = NetworKit::GraphTools::randomNeighbor(*graph, a);
+                    graph->removeEdge(a, b);
+                    cc->run();
+                    if (attempts > graph->numberOfEdges())
+                        throw new std::runtime_error("experiment fails, too many removals, cc cannot be preserved");
                 }
                 edge_updates.emplace_back(1, make_pair(a, b));
-
             }
             assert(edge_updates.size() == num_insertions);
             size_t num_removal = num_insertions / 10;

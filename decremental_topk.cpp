@@ -770,6 +770,8 @@ void DecrementalTopK::update_lengths() {
 
     vertex min_order = min(ordering[this->x], ordering[this->y]);
     this->union_of_reached_nodes.clear();
+    this->hubs_to_restore.clear();
+    vertex hub_to_resume = graph->numberOfNodes();
     std::vector<std::vector<vertex>> query_results;
     std::cout << "Affected nodes from x started..\n";
     std::vector<std::pair<dist,bool>> reconstructed_k_paths;
@@ -785,6 +787,7 @@ void DecrementalTopK::update_lengths() {
         //std::cout << "Number of visited vertices " << this->visited_in_update_lengths_from_a.size() << "\n";
         reconstructed_k_paths.clear();
         for(auto & i : this->length_labels[directed][dequeued_v].label){
+            hub_to_resume = i.first;
             if(update_temp_dist_flag[i.first].empty())
                 continue;
             for(size_t p = 0; p < i.second.size(); p++){
@@ -816,6 +819,7 @@ void DecrementalTopK::update_lengths() {
         reconstructed_k_paths.clear();
 
         union_of_reached_nodes.insert(dequeued_v);
+        hubs_to_restore.insert(hub_to_resume);
         for(vertex u : graph->neighborRange(reverse_ordering[dequeued_v])){
             to_v = ordering[u];
             if(this->tmp_pruned[to_v] || to_v == ordering[this->y]){
@@ -846,6 +850,7 @@ void DecrementalTopK::update_lengths() {
 
         reconstructed_k_paths.clear();
         for(auto & i : this->length_labels[directed][dequeued_v].label){
+            hub_to_resume = i.first;
             if(update_temp_dist_flag[i.first].empty())
                 continue;
             for(size_t p = 0; p < i.second.size(); p++){
@@ -877,7 +882,7 @@ void DecrementalTopK::update_lengths() {
         reconstructed_k_paths.clear();
 
         union_of_reached_nodes.insert(dequeued_v);
-
+        hubs_to_restore.insert(hub_to_resume);
         for(vertex u : graph->neighborRange(reverse_ordering[dequeued_v])){
             to_v = ordering[u];
             if(this->tmp_pruned[to_v] || to_v == ordering[this->x]){
@@ -925,12 +930,14 @@ void DecrementalTopK::update_lengths() {
     for(auto & v: to_add) union_of_reached_nodes.insert(v);
     std::cout << "Obsolete entries removal ended..\n";
     // RESUME kBFS
-    std::cout << "Resumed kBFS started for " << union_of_reached_nodes.size() << " nodes out of " << this->graph->numberOfNodes() << " total vertices..\n";
-    for(const vertex& resume_hub: union_of_reached_nodes){
+    std::cout << "Resumed kBFS started for " << hubs_to_restore.size() << " nodes out of " << this->graph->numberOfNodes() << " total vertices..\n";
+    for(const vertex& resume_hub: hubs_to_restore){
         resume_pbfs(resume_hub, false);
     }
     visited_in_update_lengths_from_a.clear();
     visited_in_update_lengths_from_b.clear();
+    hubs_to_restore.clear();
+    union_of_reached_nodes.clear();
     std::cout << "Resumed kBFS ended\n";
 }
 

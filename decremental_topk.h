@@ -124,6 +124,7 @@ private:
     std::vector<dist>* tmp_s_count;
     dist* visited_in_update_loops;
     std::set<vertex> union_of_reached_nodes;
+    std::set<vertex> hubs_to_restore;
     std::vector<std::pair<dist,bool>>* update_temp_dist_flag;
     std::vector<dist> auxiliary_prune;
 };

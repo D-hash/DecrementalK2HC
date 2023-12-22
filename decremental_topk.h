@@ -68,6 +68,7 @@ public:
     vertex aff_cycles;
     vertex total_pruning;
     void deallocate_aux();
+    void kbfs(vertex s, vertex t, std::vector<std::vector<vertex>> & paths);
     uint64_t compute_index_size();
 
 private:

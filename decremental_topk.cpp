@@ -471,15 +471,15 @@ uint64_t DecrementalTopK::compute_index_size() {
     uint64_t sz = 0;
     for(vertex i=0;i<graph->numberOfNodes();i++){
         for(const std::vector<vertex>& cycles: loop_labels[i] )
-            sz += cycles.size() * 32; // loopcount
+            sz += cycles.size() * sizeof(vertex); // loopcount
     }
     //assert(sz==loop_entries);
     for (size_t dir = 0; dir < 1 + directed; dir++){
         for(vertex i=0;i<graph->numberOfNodes();i++){
             for(const auto & le: length_labels[dir][i].label){
-                sz += 32; // hub count
+                sz += sizeof(vertex); // hub count
                 for(const auto & paths: le.second){
-                    sz += 32*paths.size();
+                    sz += sizeof(vertex)*paths.size();
                 }
             }
         }
@@ -1318,6 +1318,31 @@ inline void DecrementalTopK::extend_label_repair(vertex v, vertex start, std::ve
     else {
         idv.label.insert(idv.label.begin()+last, std::make_pair(start,std::vector<std::vector<vertex>>({path})));
         total_bits += 32*path.size();
+    }
+
+}
+
+void DecrementalTopK::kbfs(vertex s, vertex t, std::vector<std::vector<vertex>> & paths) {
+    std::queue<std::pair<vertex, std::vector<vertex>>> que;
+    std::vector<uint16_t> visits(graph->numberOfNodes(),0);
+    std::vector<vertex> p = {s};
+    que.push(make_pair(s, p));
+
+    while (!que.empty()) {
+        vertex v = que.front().first;
+        p = que.front().second;
+        que.pop();
+        if(visits[v] >= K) continue;
+        visits[v]++;
+        if(v == t){
+            paths.push_back(p);
+            if(paths.size() >= K) break;
+        }
+        for(vertex u : graph->neighborRange(v)){
+            std::vector<vertex> temp = p;
+            temp.push_back(u);
+            que.push(make_pair(u,temp));
+        }
     }
 
 }

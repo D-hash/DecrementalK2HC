@@ -115,7 +115,6 @@ DecrementalTopK::DecrementalTopK(NetworKit::Graph* g, dist k_value, bool dir, di
         delete rank;
 
         centr_time = local_constr_timer.elapsed();
-        //TODO : USE IT
 
 
     }
@@ -503,7 +502,7 @@ inline void DecrementalTopK::verify_sizes(){
             for(vertex j = 0; j < length_labels[dir][i].label.size(); j++){
                 sz += 1;
                 for(size_t w = 0; w < length_labels[dir][i].label[j].second.size(); w++){
-                    sz += length_labels[dir][i].label[j].second[w].size(); // todo check correctness
+                    sz += length_labels[dir][i].label[j].second[w].size();
                 }
             }
         }
@@ -517,7 +516,6 @@ void DecrementalTopK::update_loops(bool decremental) {
     if(decremental) {
         graph->addEdge(this->x, this->y);
     }
-    // todo improve with global variable distance and only one updated vertex set
     this->vertices_to_update.clear();
     std::set<vertex> reset_visited;
     std::queue<vertex> *q = new std::queue<vertex>();
@@ -863,7 +861,7 @@ void DecrementalTopK::update_lengths() {
                     }
                 }
                 for(const auto & prefix: update_temp_dist_flag[i.first])
-                    reconstructed_k_paths.emplace_back(i.second[p].size() - 1 + prefix.first, jump || prefix.second); // todo controllare se ce ne sono di stessa lunghezza con flag false
+                    reconstructed_k_paths.emplace_back(i.second[p].size() - 1 + prefix.first, jump || prefix.second);
                 if(reconstructed_k_paths.size() > K){
                     std::sort(reconstructed_k_paths.begin(), reconstructed_k_paths.end());
                 }
@@ -952,7 +950,7 @@ inline size_t DecrementalTopK::prune(vertex v,  dist d, bool rev){
     // cerr << "prune start" << endl;
     for (size_t pos = 0; pos < idv.label.size(); pos++){
         w = idv.label[pos].first;
-        if(idv.label[pos].second.empty()) // todo empty label due to path removal - should be deleted as well?
+        if(idv.label[pos].second.empty())
             continue;
         if (tmp_s_offset[w] == null_distance) continue;
 
@@ -1053,7 +1051,6 @@ inline void DecrementalTopK::resume_pbfs(vertex s, bool rev) {
             continue;
         }
         currently_reached_nodes += 1;
-        // TODO il codice commentato dovrebbe essere sfruttato in qualche modo (naive: fai query in update_lengths anziché guardare solo length_labels)
 //        if(union_of_reached_nodes.find(v) == union_of_reached_nodes.end()){
 //            goto no_query;
 //        }

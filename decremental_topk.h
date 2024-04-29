@@ -58,6 +58,10 @@ public:
 
     double n_reached_nodes();
     double n_reached_nodes_mbfs();
+    vertex affected();
+    vertex affected_hubs();
+    vertex up_loops() { return updated_loops;}
+
     // void mod_bfs(vertex, vertex, std::vector<dist>&);
 
 
@@ -92,7 +96,6 @@ private:
     void extend_label(vertex, vertex, std::vector<vertex>&, bool, size_t);
     void extend_label_repair(vertex, vertex, std::vector<vertex>&, bool);
     void incremental_extend_label_repair(vertex, vertex, std::vector<vertex>&, bool);
-
     static const dist null_distance;
     static const vertex null_vertex;
     std::queue<std::pair<vertex, std::vector<vertex>>> * node_que;
@@ -113,7 +116,9 @@ private:
 
     std::vector<vertex> reached_nodes;
     std::vector<vertex> reached_mbfs;
-
+    vertex num_affected_nodes;
+    vertex num_affected_hubs;
+    vertex updated_loops;
     std::vector<std::vector<vertex>>* loop_labels;
     index_t ** length_labels;
 

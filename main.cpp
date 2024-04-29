@@ -387,6 +387,7 @@ int main(int argc, char **argv) {
 
 
     std::vector<vertex> affected_hubs;
+    std::vector<vertex> affected_nodes;
     std::vector<vertex> affected_cycles;
     std::vector<double> reached_nodes;
     std::vector<double> reached_nodes_mbfs;
@@ -423,14 +424,15 @@ int main(int argc, char **argv) {
             time_counter.restart();
             kpll->update_lengths();
             update_lengths_times.push_back(time_counter.elapsed());
-            affected_cycles.push_back(kpll->aff_cycles);
+            affected_cycles.push_back(kpll->up_loops());
             reached_nodes_mbfs.push_back(kpll->n_reached_nodes_mbfs());
             std::cout << "done! \nUpdate lengths time: " << time_counter.elapsed()<<"\n"<<std::flush;
             std::cout << t+1 << "-th update (deletion) done!" << "\n";
         }
         index_total_bits.push_back(kpll->total_bits);
 
-        affected_hubs.push_back(kpll->aff_hubs);
+        affected_hubs.push_back(kpll->affected_hubs());
+        affected_nodes.push_back(kpll->affected());
         reached_nodes.push_back(kpll->n_reached_nodes());
         added_edges.push_back(edge_updates[t].second);
 

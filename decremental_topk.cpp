@@ -201,9 +201,6 @@ void DecrementalTopK::build(){
 
     });
     this->tmp_s_offset[graph->numberOfNodes()] = 0;
-
-
-    
     
     if(!this->is_from_scratch_only){
         this->visited_in_update_loops = new dist[graph->numberOfNodes()];
@@ -619,14 +616,14 @@ void DecrementalTopK::update_loops(bool decremental) {
     vertex ordered_degree = 0;
     vertex u;
     std::set<vertex>::iterator it;
-
+    updated_loops = 0;
     for(it=this->vertices_to_update.begin();it!=this->vertices_to_update.end();it++){
     // for(vertex u: to_update){
         u = *it;
         if(u > std::min(ordering[this->x], ordering[this->y])){
             continue;
         }
-
+        updated_loops += 1;
         for(const auto& arr: this->loop_labels[u])
             total_bits -= 32*arr.size();
         this->loop_labels[u].clear();
@@ -902,6 +899,7 @@ void DecrementalTopK::update_lengths() {
     std::cout << "Obsolete entries removal started..\n";
     std::set<vertex> to_add;
     std::set<vertex> indices_to_remove;
+    num_affected_nodes = 0;
     for(const vertex& resume_hub: union_of_reached_nodes){
         for(size_t i = 0; i < this->length_labels[0][resume_hub].label.size(); i++){
             for(size_t j = 0; j < this->length_labels[0][resume_hub].label[i].second.size(); j++){
@@ -922,6 +920,7 @@ void DecrementalTopK::update_lengths() {
                 total_bits -= 32*this->length_labels[0][resume_hub].label[i].second[*j].size();
                         this->length_labels[0][resume_hub].label[i].second.erase(this->length_labels[0][resume_hub].label[i].second.begin()+*j);
             }
+            num_affected_nodes += indices_to_remove.size();
             indices_to_remove.clear();
         }
     }
@@ -929,6 +928,7 @@ void DecrementalTopK::update_lengths() {
     std::cout << "Obsolete entries removal ended..\n";
     // RESUME kBFS
     std::cout << "Resumed kBFS started for " << hubs_to_restore.size() << " nodes out of " << this->graph->numberOfNodes() << " total vertices..\n";
+    num_affected_hubs = hubs_to_restore.size();
     for(const vertex& resume_hub: hubs_to_restore){
         resume_pbfs(resume_hub, false);
     }
@@ -1226,11 +1226,11 @@ inline void DecrementalTopK::allocate_label(vertex v, vertex start, std::vector<
 }
 
 double DecrementalTopK::n_reached_nodes(){
-    double sum = 0.0; 
+    double sum = 0.0;
     for(auto& element:reached_nodes){
         sum+=(double)element;
     }
-    return reached_nodes.size()>0 ? sum / (double)reached_nodes.size() : 0.0;
+    return reached_nodes.size()>0 ? sum / (double) reached_nodes.size() : 0.0;
 }
 
  double DecrementalTopK::n_reached_nodes_mbfs(){
@@ -1240,6 +1240,14 @@ double DecrementalTopK::n_reached_nodes(){
      }
      return reached_mbfs.size()>0 ? sum / (double) reached_mbfs.size() : 0.0;
  }
+
+ vertex DecrementalTopK::affected() {
+    return num_affected_nodes;
+}
+
+vertex DecrementalTopK::affected_hubs() {
+    return num_affected_hubs;
+}
 
 inline void DecrementalTopK::extend_label(vertex v, vertex start, std::vector<vertex>& path, bool dir, size_t pos){
     index_t &idv = length_labels[dir][v];
